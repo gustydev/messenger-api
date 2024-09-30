@@ -15,11 +15,14 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "start": "node --watch app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "NODE_ENV=development && node --watch ./src/app.js",
+    "test": "NODE_ENV=test && jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
 }

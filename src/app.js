@@ -4,29 +4,23 @@ const app = express();
 const createError = require('http-errors');
 const cors = require('cors');
 const User = require('./models/user')
+const Message = require('./models/message')
 
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', 'false')
 
-const mongoDB = process.env.MONGODB_URI;
+const databaseUrl = process.env.NODE_ENV === 'test'
+  ? process.env.TEST_DATABASE_URL
+  : process.env.DATABASE_URL;
 
 main()
 .then(async() => {
-    await User.deleteMany();
-
-    const test = new User({
-    username: 'gusty',
-    password: 'bad12345',
-    email: "lol@lol.co"
-    });
-
-    await test.save();
-    console.log(test)
+    // manual queries
 })
 .catch((err) => console.log(err));
 
 async function main() {
-  await mongoose.connect(mongoDB);
+  await mongoose.connect(databaseUrl);
 }
 
 const corsOptions = {

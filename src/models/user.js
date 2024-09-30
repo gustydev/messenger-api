@@ -14,7 +14,7 @@ const UserSchema = new Schema({
     status: {type: String, required: true, default: 'Offline'},
     friends: [{type: Schema.Types.ObjectId, ref: 'User'}],
     bio: {type: String, minLength: 1, maxLength: 200},
-    // messages: [{type: Schema.Types.ObjectId, ref: 'Message'}]
+    messages: [{type: Schema.Types.ObjectId, ref: 'Message'}]
 })
 
 module.exports = mongoose.model('User', UserSchema);
