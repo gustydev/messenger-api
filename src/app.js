@@ -5,6 +5,7 @@ const createError = require('http-errors');
 const cors = require('cors');
 const User = require('./models/user')
 const Message = require('./models/message')
+const Chat = require('./models/chat')
 
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', 'false')
@@ -15,7 +16,45 @@ const databaseUrl = process.env.NODE_ENV === 'test'
 
 main()
 .then(async() => {
-    // manual queries
+    await Message.deleteMany()
+    await User.deleteMany()
+    await Chat.deleteMany();
+
+    const gusty = new User({
+      username: 'gusty',
+      password: 'lol123456',
+      email: "gusty@fakemail.org"
+    })
+    await gusty.save();
+
+    const chat = new Chat({title: 'testing', members: [gusty]})
+    await chat.save();
+
+    const message = new Message({
+      content: 'hi there',
+      postedBy: gusty,
+      chat: chat
+    })
+    
+    const message2 = new Message({
+      attachmentUrl: 'randomurl.com',
+      postedBy: gusty,
+      chat: chat
+    })
+
+    const message3 = new Message({
+      content: 'this one has both text and an attachment oooo',
+      attachmentUrl: 'lol.org',
+      postedBy: gusty,
+      chat: chat
+    })
+    
+    await message.save();
+    await message2.save()
+    await message3.save()
+
+    console.log(message, message2,message3)
+    // console.log(message, message2)
 })
 .catch((err) => console.log(err));
 

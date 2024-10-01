@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
     username: {type: String, required: true, minLength: 4, maxLength: 30, unique: true},
     password: {type: String, required: true, minLength: 8, maxLength: 50},
-    email: {type: String, required: true, unique: true},
+    email: {type: String, required: true, unique: true}, // validate with regex later
     displayName: {type: String, minLength: 4, maxLength: 30, default: function () {
         return this.username;
     }},
