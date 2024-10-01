@@ -12,7 +12,6 @@ const MessageSchema = new Schema({
 })
 
 MessageSchema.pre('validate', function(next) {
-    console.log(this.attachmentUrl, this.content)
     if (!this.attachmentUrl && this.content.length < 1) {
         return next(new Error('Message must have text or an attachment'))
     }
