@@ -15,6 +15,20 @@ const UserSchema = new Schema({
     friends: [{type: Schema.Types.ObjectId, ref: 'User'}],
     bio: {type: String, minLength: 1, maxLength: 200},
     messages: [{type: Schema.Types.ObjectId, ref: 'Message'}]
+}, { collation: { locale: 'en_US', strength: 1 } }) // case insensitive unique indexes
+
+UserSchema.pre('validate', async function(next) {
+    const usernameTaken = await mongoose.model('User').findOne({username: this.username})
+    if (usernameTaken) {
+        return next(new Error('Username already taken'))
+    }
+
+    const emailTaken = await mongoose.model('User').findOne({email: this.email})
+    if (emailTaken) {
+        return next(new Error("Email already in use"))
+    } 
+
+    next();
 })
 
 module.exports = mongoose.model('User', UserSchema);
