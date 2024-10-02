@@ -40,10 +40,34 @@ describe('new chat', () => {
         .expect('Content-Type', /json/)
         .set('Authorization', authorization)
         .send({
-            title: 'Test Title',
-            description: 'Test description',
+            title: 'Test Title'
+        })
+        .expect(200)
+    })
+
+    it('allows chat to be set as public or private', async() => {
+        const res = await request(app)
+        .post('/chat/new')
+        .expect('Content-Type', /json/)
+        .set('Authorization', authorization)
+        .send({
+            title: 'Public Chat',
             public: true
         })
         .expect(200)
+
+        expect(res.body.chat.public).toBeTruthy()
+
+        const res2 = await request(app)
+        .post('/chat/new')
+        .expect('Content-Type', /json/)
+        .set('Authorization', authorization)
+        .send({
+            title: 'Private Chat',
+            public: false
+        })
+        .expect(200)
+
+        expect(res2.body.chat.public).toBeFalsy()
     })
 })
