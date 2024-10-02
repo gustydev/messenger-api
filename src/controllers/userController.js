@@ -17,13 +17,21 @@ exports.userRegister = [
         if (user) {
             throw new Error('Username already taken')
         } 
-        return true
     }),
 
     body('password')
     .trim()
     .isLength({min: 8})
     .withMessage('Password must be at least 8 characters long'),
+
+    body('confirmPassword')
+    .trim()
+    .custom((value, {req}) => {
+        if (value === req.body.password) {
+            return true;
+        }
+        throw new Error('Passwords do not match')
+    }),
 
     body('displayName')
     .trim()
@@ -60,4 +68,37 @@ exports.userRegister = [
     })
 ]
 
-exports.userLogin = [];
+exports.userLogin = [
+    body('username')
+    .custom(async (value) => {
+        const user = await User.findOne({username: value})
+        if (!user) {
+            throw new Error("User not found")
+        }
+    }),
+
+    body('password')
+    .custom(async (value, {req}) => {
+        const user = await User.findOne({username: req.body.username})
+        const match = await bcrypt.compare(value, user.password);
+
+        if (!match) { throw new Error('Incorrect password, please try again.')}
+    }),
+
+    asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            return res.status(400).json(errors)
+        }
+
+        const user = await User.findOne({username: req.body.username});
+        const token = jwt.sign({id: user._id}, process.env.SECRET, {expiresIn: '3d'});
+
+        return res.status(200).json({
+            msg: 'Logged in succesfully! Token expires in 3 days',
+            token,
+            user
+        })
+    })
+];

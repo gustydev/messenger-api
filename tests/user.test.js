@@ -23,24 +23,14 @@ describe('get user', () => {
 })
 
 describe('user register', () => {
-    it('return status 400 on invalid user inputs', function(done) {
-        request(app)
-        .post('/user/register')
-        .expect('Content-Type', /json/)
-        .send({
-            username: 'not valid',
-            password: '2short'
-        })
-        .expect(400, done)
-    }),
-
     it('create a new user', async() => {
         const res = await request(app)
         .post('/user/register')
         .expect('Content-Type', /json/)
         .send({
             username: 'tester',
-            password: '12345678'
+            password: '12345678',
+            confirmPassword: '12345678'
         })
         .expect(200);
 
@@ -55,6 +45,7 @@ describe('user register', () => {
         .send({
             username: 'lorem',
             password: 'random1234',
+            confirmPassword: 'random1234',
             displayName: 'ipsum dolor'
         })
         .expect(200);
@@ -67,8 +58,79 @@ describe('user register', () => {
         .post('/user/register')
         .expect('Content-Type', /json/)
         .send({
-            username: 'tester', // taken
-            password: 'doesntmatter'
+            username: 'TeStEr', // taken, case insensitive
+            password: 'doesntmatter',
+            confirmPassword: 'doesntmatter'
+        })
+        .expect(400)
+    })
+
+    it('returns error if passwords don\'t match', async() => {
+        await request(app)
+        .post('/user/register')
+        .expect('Content-Type', /json/)
+        .send({
+            username: 'lolz',
+            password: '12345678',
+            confirmPassword: 'somethingelse'
+        })
+        .expect(400)
+    })
+
+    it('returns error on invalid username', async() => {
+        await request(app)
+        .post('/user/register')
+        .expect('Content-Type', /json/)
+        .send({
+            username: 'invalid username',
+            password: '12345678',
+            confirmPassword: '12345678'
+        })
+        .expect(400)
+    }),
+
+    it('returns error on invalid password', async() => {
+        await request(app)
+        .post('/user/register')
+        .expect('Content-Type', /json/)
+        .send({
+            username: 'valid',
+            password: 'not',
+            confirmPassword: 'not'
+        })
+        .expect(400)
+    })
+})
+
+describe('user login', () => {
+    it('logins user with valid credentials and returns token', async() => {
+        const res = await request(app)
+        .post('/user/login')
+        .expect('Content-Type', /json/)
+        .send({
+            username: 'TESTER', // case insensitive!
+            password: '12345678'
+        })
+        .expect(200)
+
+        expect(res.body).toHaveProperty('token'); // jwt
+        expect(res.body.user).toHaveProperty('_id');
+    })
+
+    it('returns error if user not found or password invalid', async() => {
+        await request(app)
+        .post('/user/login')
+        .send({
+            username: 'idontexist',
+            password: '12345678'
+        })
+        .expect(400)
+
+        await request(app)
+        .post('/user/login')
+        .send({
+            username: 'TESTER',
+            password: 'notthepass'
         })
         .expect(400)
     })
