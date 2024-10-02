@@ -1,32 +1,14 @@
-require('dotenv').config()
-const user = require('../src/routes/user');
-const userModel = require('../src/models/user')
-const request = require("supertest");
-const express = require("express");
-const app = express();
+const { app, request, connectDB, disconnectDB, clearDB } = require('./setup');
 
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-app.use("/", user);
-
-const mongoose = require('mongoose');
-mongoose.set('strictQuery', 'false')
-
-const databaseUrl = process.env.TEST_DATABASE_URL;
-
-main()
-.catch((err) => console.log(err));
-
-async function main() {
-  await mongoose.connect(databaseUrl);
-}
+const User = require('../src/models/user')
 
 beforeAll(async() => {
-    await userModel.deleteMany() // clean database before tests
+    await connectDB();
+    await clearDB(User);
 });
 
 afterAll(async() => {
-    await mongoose.disconnect();
+    await disconnectDB()
 })
 
 describe('get user', () => {
