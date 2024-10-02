@@ -8,7 +8,7 @@ const user = require('../src/routes/user');
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use("/", user);
+app.use("/user", user);
 
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', 'false')

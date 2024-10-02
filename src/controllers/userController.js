@@ -20,18 +20,6 @@ exports.userRegister = [
         return true
     }),
 
-    body('email')
-    .trim()
-    .matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
-    .withMessage('Invalid email')
-    .custom(async (value) => {
-        const email = await User.findOne({email: value});
-        if (email) {
-            throw new Error('Email already in use')
-        }
-        return true
-    }),
-
     body('password')
     .trim()
     .isLength({min: 8})
@@ -56,7 +44,6 @@ exports.userRegister = [
             const user = new User({
                 username: req.body.username,
                 password: hashedPass,
-                email: req.body.email,
                 displayName: req.body.displayName || undefined
             });
 
@@ -65,7 +52,6 @@ exports.userRegister = [
             return res.status(200).json({msg: 'User created successfully', user: {
                 _id: user._id,
                 username: user.username,
-                email: user.email,
                 displayName: user.displayName,
             }})
         } catch (error) {
@@ -73,3 +59,5 @@ exports.userRegister = [
         }
     })
 ]
+
+exports.userLogin = [];

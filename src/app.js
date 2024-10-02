@@ -14,9 +14,7 @@ const userRoute = require('./routes/user')
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', 'false')
 
-const databaseUrl = process.env.NODE_ENV === 'test'
-  ? process.env.TEST_DATABASE_URL
-  : process.env.DATABASE_URL;
+const databaseUrl = process.env.DATABASE_URL;
 
 main()
 .then(async() => {
@@ -116,6 +114,8 @@ app.use(function(req, res, next) {
 
 // Global error handler
 app.use((err, req, res, next) => {
+  console.error(err)
+
   const statusCode = err.statusCode || 500;
   const error = err.message || 'Internal Server Error';
 

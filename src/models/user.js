@@ -4,7 +4,6 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
     username: {type: String, required: true, minLength: 4, maxLength: 30, unique: true},
     password: {type: String, required: true, minLength: 8},
-    email: {type: String, required: true, unique: true}, // validate with regex later
     displayName: {type: String, minLength: 2, maxLength: 30, default: function () {
         return this.username;
     }},
@@ -22,11 +21,6 @@ UserSchema.pre('validate', async function(next) {
     if (usernameTaken) {
         return next(new Error('Username already taken'))
     }
-
-    const emailTaken = await mongoose.model('User').findOne({email: this.email})
-    if (emailTaken) {
-        return next(new Error("Email already in use"))
-    } 
 
     next();
 })
