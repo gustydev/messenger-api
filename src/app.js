@@ -10,6 +10,7 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const passport = require('passport');
 const userRoute = require('./routes/user')
+const chatRoute = require('./routes/chat')
 
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', 'false')
@@ -17,53 +18,6 @@ mongoose.set('strictQuery', 'false')
 const databaseUrl = process.env.DATABASE_URL;
 
 main()
-.then(async() => {
-    // await Message.deleteMany()
-    // await User.deleteMany()
-    // await Chat.deleteMany();
-
-    // const gusty = new User({
-    //   username: 'gusty',
-    //   password: 'lol123456',
-    //   email: "gusty@fakemail.org"
-    // })
-    // await gusty.save();
-
-    // const ytsug = new User({
-    //   username: 'gusty2',
-    //   password: 'whotehfuckcares',
-    //   email: 'gusty@fakemail.o'
-    // })
-    // await ytsug.save();
-
-    // const chat = new Chat({title: 'testing', members: [gusty]})
-    // await chat.save();
-
-    // const message = new Message({
-    //   content: 'hi there',
-    //   postedBy: gusty,
-    //   chat: chat
-    // })
-    
-    // const message2 = new Message({
-    //   attachmentUrl: 'randomurl.com',
-    //   postedBy: gusty,
-    //   chat: chat
-    // })
-
-    // const message3 = new Message({
-    //   content: 'this one has both text and an attachment oooo',
-    //   attachmentUrl: 'lol.org',
-    //   postedBy: gusty,
-    //   chat: chat
-    // })
-    
-    // await message.save();
-    // await message2.save()
-    // await message3.save()
-
-    // console.log(message, message2,message3)
-})
 .catch((err) => console.log(err));
 
 async function main() {
@@ -106,6 +60,7 @@ app.get('/', (req, res) => {
 })
 
 app.use('/user', userRoute)
+app.use('/chat', chatRoute)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

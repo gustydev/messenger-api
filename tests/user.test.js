@@ -77,7 +77,7 @@ describe('user register', () => {
         .expect(400)
     })
 
-    it('returns error on invalid username', async() => {
+    it('returns error on invalid username or password', async() => {
         await request(app)
         .post('/user/register')
         .expect('Content-Type', /json/)
@@ -87,9 +87,7 @@ describe('user register', () => {
             confirmPassword: '12345678'
         })
         .expect(400)
-    }),
 
-    it('returns error on invalid password', async() => {
         await request(app)
         .post('/user/register')
         .expect('Content-Type', /json/)
@@ -103,12 +101,22 @@ describe('user register', () => {
 })
 
 describe('user login', () => {
-    it('logins user with valid credentials and returns token', async() => {
+    it('logins user with valid credentials and returns jwt', async() => {
+        await request(app)
+        .post('/user/register')
+        .expect('Content-Type', /json/)
+        .send({
+            username: 'testuser',
+            password: '12345678',
+            confirmPassword: '12345678'
+        })
+        .expect(200);
+
         const res = await request(app)
         .post('/user/login')
         .expect('Content-Type', /json/)
         .send({
-            username: 'TESTER', // case insensitive!
+            username: 'TestUser', // case insensitive!
             password: '12345678'
         })
         .expect(200)
