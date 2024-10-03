@@ -112,7 +112,7 @@ describe('new chat', () => {
     })
 })
 
-describe('update chat', () => {
+describe('update chat info', () => {
     it('updates chat with valid inputs', async() => {
         await updateChat({
             title: 'New Title',

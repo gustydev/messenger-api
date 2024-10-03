@@ -6,6 +6,30 @@ const Chat = require('../models/chat');
 const User = require('../models/user')
 const Message = require('../models/message')
 
+exports.getChats = asyncHandler(async function(req, res, next) {
+    const chats = await Chat.find();
+
+    res.status(200).json(chats);
+})
+
+exports.getChatById = asyncHandler(async function(req, res, next) {
+    const chat = await Chat.findById(req.params.chatId);
+
+    res.status(200).json(chat);
+})
+
+exports.getChatMessages = asyncHandler(async function(req, res, next) {
+    const chat = await Chat.findById(req.params.chatId).select('messages').populate('messages');
+
+    res.status(200).json(chat);
+})
+
+exports.getChatMembers = asyncHandler(async function(req, res, next) {
+    const chat = await Chat.findById(req.params.chatId).select('members').populate('members.member');
+
+    res.status(200).json(chat);
+})
+
 exports.newChat = [
     body('title')
     .isString()
@@ -86,7 +110,8 @@ exports.updateChat = [
 
         try {
             const token = req.headers['authorization'].split(' ')[1];
-            const decoded = jwt.verify(token, process.env.SECRET); // decodes the jwt of who requested the chat update (not necessarily an admin)
+            const decoded = jwt.verify(token, process.env.SECRET); 
+            // decodes the jwt of who requested the update (not necessarily an admin or even in the chat)
 
             const chat = await Chat.findById(req.params.chatId);
             const user = await User.findById(decoded.id)
