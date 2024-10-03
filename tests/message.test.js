@@ -11,6 +11,7 @@ beforeAll(async() => {
     await connectDB();
     await clearDB(User);
     await clearDB(Chat);
+    await clearDB(Message)
 
     await request(app)
     .post('/user/register')
@@ -43,10 +44,11 @@ beforeAll(async() => {
 afterAll(async() => {
     await clearDB(User);
     await clearDB(Chat);
+    await clearDB(Message);
     await disconnectDB()
 })
 
-async function postMessage(data, chatId, status, auth = authorization) {
+async function postMessage(data, status, chatId = chat._id, auth = authorization) {
     return await request(app)
     .post(`/chat/${chatId}/message`)
     .set('Authorization', auth)
@@ -59,25 +61,35 @@ describe('posting messages in a chat', () => {
     it('should post valid message', async() => {
         await postMessage({
             content: 'this is a valid message, hello :>'
-        }, chat._id, 200)
+        }, 200)
     })
 
-    it('return error on invalid content', async() => {
+    it('returns errors on invalid content', async() => {
         // Invalid because no content and no attachment
         await postMessage({
             content: ''
-        }, chat._id, 400)
+        }, 400)
+
+        // invalid because not a string
+        await postMessage({
+            content: 420
+        }, 400)
+
+        // Invalid because it goes over 250 char limit
+        await postMessage({
+            content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium q'
+        }, 400)
     })
 
     it('return error on invalid chat id', async() => {
         await postMessage({
             content: 'hi'
-        }, 'not a chat id', 400)
+        }, 400, 'invalid id')
     })
 
     it('return error on invalid jwt', async() => {
         await postMessage({
             content: 'hi'
-        }, chat._id, 400, 'Bearer not.a.token')
+        }, 400, chat._id, 'Bearer not.a.token')
     })
 })

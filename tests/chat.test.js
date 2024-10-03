@@ -75,6 +75,12 @@ describe('new chat', () => {
 
         // Invalid: public is not boolean
         await createChat({title: 'valid title', public: 'public'}, 400)
+
+        // invalid because title is not string
+        await createChat({title: true}, 400)
+
+        // invalid because description is not string
+        await createChat({title: 'title', description: 420}, 400)
     })
 
     it('returns error on invalid jwt', async() => {

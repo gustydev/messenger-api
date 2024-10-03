@@ -7,6 +7,8 @@ const User = require('../models/user')
 
 exports.userRegister = [
     body('username')
+    .isString()
+    .withMessage('Username must be a string')
     .trim()
     .isLength({min: 4, max: 30})
     .withMessage('Username must be between 4 and 30 characters')
@@ -20,6 +22,8 @@ exports.userRegister = [
     }),
 
     body('password')
+    .isString()
+    .withMessage('Password must be a string')
     .trim()
     .isLength({min: 8})
     .withMessage('Password must be at least 8 characters long'),
@@ -34,8 +38,10 @@ exports.userRegister = [
     }),
 
     body('displayName')
-    .trim()
     .optional() // if not given in body, is set to the username
+    .isString()
+    .withMessage('Display name must be a string')
+    .trim()
     .isLength({min: 2, max: 30})
     .withMessage('Display name must be between 2 and 30 characters'),
 
@@ -70,6 +76,8 @@ exports.userRegister = [
 
 exports.userLogin = [
     body('username')
+    .isString()
+    .withMessage('Username must be a string')
     .custom(async (value) => {
         const user = await User.findOne({username: value})
         if (!user) {
@@ -78,6 +86,8 @@ exports.userLogin = [
     }),
 
     body('password')
+    .isString()
+    .withMessage('Password must be a string')
     .custom(async (value, {req}) => {
         const user = await User.findOne({username: req.body.username})
         const match = await bcrypt.compare(value, user.password);

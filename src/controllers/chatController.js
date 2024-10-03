@@ -8,12 +8,17 @@ const Message = require('../models/message')
 
 exports.newChat = [
     body('title')
+    .isString()
+    .withMessage('Title must be a string')
     .trim()
     .isLength({min: 1, max: 50})
     .withMessage('Chat must have a title of 50 characters maximum'),
 
     body('description')
     .optional()
+    .isString()
+    .withMessage('Description must be a string')
+    .trim()
     .isLength({min: 1, max: 200})
     .withMessage('Description has a limit of 200 characters'),
 
@@ -52,6 +57,8 @@ exports.newChat = [
 
 exports.postMessage = [
     body('content')
+    .isString()
+    .withMessage('Message must be a string')
     .isLength({max: 250})
     .withMessage('Max length of message: 250 characters'),
 
@@ -77,6 +84,7 @@ exports.postMessage = [
                 content: req.body.content,
                 chat: await Chat.findById(req.params.chatId),
                 postedBy: poster
+                // i'll work on attachments later
             })
 
             await msg.save();

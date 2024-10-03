@@ -1,6 +1,7 @@
 const { app, request, connectDB, disconnectDB, clearDB } = require('./setup');
 
-const User = require('../src/models/user')
+const User = require('../src/models/user');
+const { trusted } = require('mongoose');
 
 beforeAll(async() => {
     await connectDB();
@@ -39,7 +40,7 @@ describe('get user', () => {
 })
 
 describe('user register', () => {
-    it('create a new user', async() => {
+    it('create a new valid user', async() => {
         const res = await userRegister({
             username: 'tester',
             password: '12345678',
@@ -88,6 +89,20 @@ describe('user register', () => {
             username: 'valid',
             password: 'not',
             confirmPassword: 'not'
+        }, 400)
+
+        // username is not a string
+        await userRegister({
+            username: false,
+            password: '12345678',
+            confirmPassword: '12345678'
+        }, 400)
+
+        // password is not a string
+        await userRegister({
+            username: 'valid',
+            password: 12345678,
+            confirmPassword: '12345678'
         }, 400)
     })
 })
