@@ -12,6 +12,22 @@ afterAll(async() => {
     await disconnectDB()
 })
 
+async function userRegister(data, status) {
+    return await request(app)
+    .post('/user/register')
+    .expect('Content-Type', /json/)
+    .send(data)
+    .expect(status)
+}
+
+async function userLogin(data, status) {
+    return await request(app)
+    .post('/user/login')
+    .expect('Content-Type', /json/)
+    .send(data)
+    .expect(status)
+}
+
 describe('get user', () => {
     it('respond with user get', function(done) {
         request(app)
@@ -24,122 +40,84 @@ describe('get user', () => {
 
 describe('user register', () => {
     it('create a new user', async() => {
-        const res = await request(app)
-        .post('/user/register')
-        .expect('Content-Type', /json/)
-        .send({
+        const res = await userRegister({
             username: 'tester',
             password: '12345678',
             confirmPassword: '12345678'
-        })
-        .expect(200);
+        }, 200)
 
         expect(res.body.user.displayName).toEqual('tester') // not setting display name = same as username
         expect(res.body.user).toHaveProperty('_id'); // means it got saved in database
     }),
 
     it('create new user with custom display name', async() => {
-        const res = await request(app)
-        .post('/user/register')
-        .expect('Content-Type', /json/)
-        .send({
+        const res = await userRegister({
             username: 'lorem',
             password: 'random1234',
             confirmPassword: 'random1234',
             displayName: 'ipsum dolor'
-        })
-        .expect(200);
+        }, 200)
 
         expect(res.body.user.displayName).toEqual('ipsum dolor')
     })
 
     it('rejects taken username', async() => {
-        await request(app)
-        .post('/user/register')
-        .expect('Content-Type', /json/)
-        .send({
+        await userRegister({
             username: 'TeStEr', // taken, case insensitive
             password: 'doesntmatter',
             confirmPassword: 'doesntmatter'
-        })
-        .expect(400)
+        }, 400)
     })
 
     it('returns error if passwords don\'t match', async() => {
-        await request(app)
-        .post('/user/register')
-        .expect('Content-Type', /json/)
-        .send({
+        await userRegister({
             username: 'lolz',
             password: '12345678',
             confirmPassword: 'somethingelse'
-        })
-        .expect(400)
+        }, 400)
     })
 
     it('returns error on invalid username or password', async() => {
-        await request(app)
-        .post('/user/register')
-        .expect('Content-Type', /json/)
-        .send({
+        await userRegister({
             username: 'invalid username',
             password: '12345678',
             confirmPassword: '12345678'
-        })
-        .expect(400)
+        }, 400)
 
-        await request(app)
-        .post('/user/register')
-        .expect('Content-Type', /json/)
-        .send({
+        await userRegister({
             username: 'valid',
             password: 'not',
             confirmPassword: 'not'
-        })
-        .expect(400)
+        }, 400)
     })
 })
 
 describe('user login', () => {
     it('logins user with valid credentials and returns jwt', async() => {
-        await request(app)
-        .post('/user/register')
-        .expect('Content-Type', /json/)
-        .send({
+        await userRegister({
             username: 'testuser',
             password: '12345678',
             confirmPassword: '12345678'
-        })
-        .expect(200);
+        }, 200)
 
-        const res = await request(app)
-        .post('/user/login')
-        .expect('Content-Type', /json/)
-        .send({
+        const res = await userLogin({
             username: 'TestUser', // case insensitive!
             password: '12345678'
-        })
-        .expect(200)
+        }, 200)
 
         expect(res.body).toHaveProperty('token'); // jwt
         expect(res.body.user).toHaveProperty('_id');
     })
 
     it('returns error if user not found or password invalid', async() => {
-        await request(app)
-        .post('/user/login')
-        .send({
+        await userLogin({
             username: 'idontexist',
             password: '12345678'
-        })
-        .expect(400)
+        }, 400)
 
-        await request(app)
-        .post('/user/login')
-        .send({
+        await userLogin({
             username: 'TESTER',
             password: 'notthepass'
-        })
-        .expect(400)
+        }, 400)
     })
 })

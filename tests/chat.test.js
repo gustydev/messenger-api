@@ -33,41 +33,47 @@ afterAll(async() => {
     await disconnectDB()
 })
 
+async function createChat(data, status) {
+    return await request(app)
+    .post('/chat/new')
+    .expect('Content-Type', /json/)
+    .set('Authorization', authorization)
+    .send(data)
+    .expect(status);
+};
+
 describe('new chat', () => {
     it('creates new chat', async() => {
-        await request(app)
-        .post('/chat/new')
-        .expect('Content-Type', /json/)
-        .set('Authorization', authorization)
-        .send({
-            title: 'Test Title'
-        })
-        .expect(200)
+        await createChat({title: 'Test Title'}, 200)
     })
 
     it('allows chat to be set as public or private', async() => {
-        const res = await request(app)
-        .post('/chat/new')
-        .expect('Content-Type', /json/)
-        .set('Authorization', authorization)
-        .send({
+        const res = await createChat({
             title: 'Public Chat',
             public: true
-        })
-        .expect(200)
+        }, 200)
 
         expect(res.body.chat.public).toBeTruthy()
 
-        const res2 = await request(app)
-        .post('/chat/new')
-        .expect('Content-Type', /json/)
-        .set('Authorization', authorization)
-        .send({
+        const res2 = await createChat({
             title: 'Private Chat',
             public: false
-        })
-        .expect(200)
+        }, 200)
 
         expect(res2.body.chat.public).toBeFalsy()
+    })
+
+    it('returns errors on invalid inputs', async() => {
+        // Invalid: no title
+        await createChat({title: ''}, 400)
+
+        // Invalid: description is too long (200+ chars)
+        await createChat({
+            title: 'valid title',
+            description: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec qua'
+        }, 400)
+
+        // Invalid: public is not boolean
+        await createChat({title: 'valid title', public: 'public'}, 400)
     })
 })
