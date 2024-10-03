@@ -1,4 +1,4 @@
-const { app, request, connectDB, disconnectDB, clearDB } = require('./setup');
+const { app, request, connectDB, disconnectDB, clearDB, userRegister, userLogin } = require('./setup');
 
 const User = require('../src/models/user');
 
@@ -11,22 +11,6 @@ afterAll(async() => {
     await clearDB(User);
     await disconnectDB()
 })
-
-async function userRegister(data, status) {
-    return await request(app)
-    .post('/user/register')
-    .expect('Content-Type', /json/)
-    .send(data)
-    .expect(status)
-}
-
-async function userLogin(data, status) {
-    return await request(app)
-    .post('/user/login')
-    .expect('Content-Type', /json/)
-    .send(data)
-    .expect(status)
-}
 
 describe('get user', () => {
     it('respond with user get', function(done) {

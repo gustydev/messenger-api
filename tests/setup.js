@@ -51,10 +51,28 @@ async function clearDB(model) {
     await model.deleteMany(); // clears db of model used in test
 }
 
+async function userRegister(data, status) {
+    return await request(app)
+    .post('/user/register')
+    .expect('Content-Type', /json/)
+    .send(data)
+    .expect(status)
+}
+
+async function userLogin(data, status) {
+    return await request(app)
+    .post('/user/login')
+    .expect('Content-Type', /json/)
+    .send(data)
+    .expect(status)
+}
+
 module.exports = {
     app,
     request,
     connectDB,
     disconnectDB,
-    clearDB
+    clearDB,
+    userRegister,
+    userLogin
 };

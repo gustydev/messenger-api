@@ -93,7 +93,8 @@ exports.updateChat = [
 
             const userInChat = chat.members.find((m) => m.member.equals(user._id));
 
-            if (!userInChat.isAdmin) {
+            if (!userInChat || !userInChat.isAdmin) {
+                // Reject put request if user is not in chat or is not an admin
                 return res.status(401).json({msg: 'Unauthorized'})
             }
 

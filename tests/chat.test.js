@@ -1,10 +1,11 @@
-const { app, request, connectDB, disconnectDB, clearDB } = require('./setup');
+const { app, request, connectDB, disconnectDB, clearDB, userRegister, userLogin } = require('./setup');
 
 const User = require('../src/models/user')
 const Chat = require('../src/models/chat')
 
 let authorization = '';
 let updatedChat;
+let regular;
 
 async function createChat(data, status, auth = authorization) {
     return await request(app)
@@ -15,7 +16,7 @@ async function createChat(data, status, auth = authorization) {
     .expect(status);
 };
 
-async function updateChat(data, status, chatId, auth = authorization) {
+async function updateChat(data, status, chatId = updatedChat._id, auth = authorization) {
     return await request(app)
     .put(`/chat/${chatId}`)
     .expect('Content-Type', /json/)
@@ -29,25 +30,32 @@ beforeAll(async() => {
     await clearDB(User);
     await clearDB(Chat);
 
-    await request(app)
-    .post('/user/register')
-    .send({
-        username: 'test',
+    await userRegister({
+        username: 'admin',
         password: '12345678',
         confirmPassword: '12345678'
-    })
-    .expect(200);
+    }, 200)
 
-    const res = await request(app)
-    .post('/user/login')
-    .send({username: 'test', password: '12345678'})
-    .expect(200)
-
+    const res = await userLogin({username: 'admin', password: '12345678'}, 200)
     authorization = `Bearer ${res.body.token}`;
 
-    const res2 = await createChat({title: 'temporary title'}, 200)
+    await userRegister({
+        username: 'regular',
+        password: 'doesntmatter',
+        confirmPassword: 'doesntmatter'
+    }, 200);
 
-    updatedChat = res2.body.chat;
+    const res2 = await userLogin({username: 'regular', password: 'doesntmatter'}, 200)
+    regular = res2.body;
+
+    const res3 = await createChat({title: 'temporary title'}, 200)
+    const chatId = res3.body.chat._id
+
+    updatedChat = await Chat.findByIdAndUpdate(chatId, {
+        $push: {
+            members: {member: regular.user._id, isAdmin: false}
+        }
+    }, {new: true});
 });
 
 afterAll(async() => {
@@ -110,10 +118,48 @@ describe('update chat', () => {
             title: 'New Title',
             description: 'new desc',
             public: true
-        }, 200, updatedChat._id)
+        }, 200)
 
         await updateChat({
             description: 'updating just the description this time',
-        }, 200, updatedChat._id)
+        }, 200)
+    })
+
+    it('rejects invalid inputs when updating', async() => {
+        await updateChat({
+            title: '',
+            public: 'no'
+        }, 400)
+    })
+
+    it('rejects updating if jwt is invalid', async() => {
+        await updateChat({
+            title: 'random'
+        }, 400, updatedChat._id, 'Bearer not.a.token')
+    })
+
+    it('rejects updating if user is not in chat', async() => {
+        await userRegister({
+            username: 'notAChatter',
+            password: 'notAChatter',
+            confirmPassword: 'notAChatter'
+        }, 200);
+
+        const res = await userLogin({
+            username: 'notAChatter',
+            password: 'notAChatter'
+        }, 200)
+
+        const authy = `Bearer ${res.body.token}`;
+
+        await updateChat({
+            title: 'random'
+        }, 401, updatedChat._id, authy)
+    })
+
+    it('rejects updating if user is not a chat admin', async() => {
+        await updateChat({
+            title: 'random'
+        }, 401, updatedChat._id, `Bearer ${regular.token}`)
     })
 })
