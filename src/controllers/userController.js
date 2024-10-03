@@ -92,13 +92,17 @@ exports.userLogin = [
             return res.status(400).json(errors)
         }
 
-        const user = await User.findOne({username: req.body.username}).select('-password');
-        const token = jwt.sign({id: user._id}, process.env.SECRET, {expiresIn: '3d'});
-
-        return res.status(200).json({
-            msg: 'Logged in succesfully! Token expires in 3 days',
-            token,
-            user
-        })
+        try {
+            const user = await User.findOne({username: req.body.username}).select('-password');
+            const token = jwt.sign({id: user._id}, process.env.SECRET, {expiresIn: '3d'});
+    
+            return res.status(200).json({
+                msg: 'Logged in succesfully! Token expires in 3 days',
+                token,
+                user
+            })
+        } catch (err) {
+            res.status(400).json(err)
+        }
     })
 ];

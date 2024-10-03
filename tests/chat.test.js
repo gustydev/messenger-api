@@ -33,11 +33,11 @@ afterAll(async() => {
     await disconnectDB()
 })
 
-async function createChat(data, status) {
+async function createChat(data, status, auth = authorization) {
     return await request(app)
     .post('/chat/new')
     .expect('Content-Type', /json/)
-    .set('Authorization', authorization)
+    .set('Authorization', auth)
     .send(data)
     .expect(status);
 };
@@ -75,5 +75,9 @@ describe('new chat', () => {
 
         // Invalid: public is not boolean
         await createChat({title: 'valid title', public: 'public'}, 400)
+    })
+
+    it('returns error on invalid jwt', async() => {
+        await createChat({title: 'test title'}, 400, 'Bearer not.a.token')
     })
 })

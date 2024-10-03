@@ -1,9 +1,10 @@
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
-const { body, validationResult } = require('express-validator');
+const { body, param, validationResult } = require('express-validator');
 const asyncHandler = require('express-async-handler');
 const Chat = require('../models/chat');
 const User = require('../models/user')
+const Message = require('../models/message')
 
 exports.newChat = [
     body('title')
@@ -44,6 +45,46 @@ exports.newChat = [
             return res.status(200).json({msg: 'Chat created', chat})
         } catch (err) {
             console.error(err)
+            res.status(400).json(err)
+        }
+    })
+]
+
+exports.postMessage = [
+    body('content')
+    .isLength({max: 250})
+    .withMessage('Max length of message: 250 characters'),
+
+    param('chatId')
+    .custom(async (value) => {
+        const chat = await Chat.findById(value);
+        if (!chat) { throw new Error('Chat not found')}
+    }),
+
+    asyncHandler(async function(req, res, next) {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.status(400).json(errors)
+        }
+
+        try {
+            const token = req.headers['authorization'].split(' ')[1];
+            const decoded = jwt.verify(token, process.env.SECRET);
+            const poster = await User.findById(decoded.id);
+
+            const msg = new Message({
+                content: req.body.content,
+                chat: await Chat.findById(req.params.chatId),
+                postedBy: poster
+            })
+
+            await msg.save();
+
+            return res.status(200).json({msg: 'Message posted', msg})
+        } catch (err) {
+            console.error(err)
+            res.status(400).json(err);
         }
     })
 ]
