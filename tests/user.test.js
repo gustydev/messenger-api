@@ -1,7 +1,6 @@
 const { app, request, connectDB, disconnectDB, clearDB } = require('./setup');
 
 const User = require('../src/models/user');
-const { trusted } = require('mongoose');
 
 beforeAll(async() => {
     await connectDB();
@@ -80,14 +79,14 @@ describe('user register', () => {
 
     it('returns error on invalid username or password', async() => {
         await userRegister({
-            username: 'invalid username',
+            username: 'invalid username', // has spaces
             password: '12345678',
             confirmPassword: '12345678'
         }, 400)
 
         await userRegister({
             username: 'valid',
-            password: 'not',
+            password: 'not', // too short
             confirmPassword: 'not'
         }, 400)
 
@@ -124,7 +123,7 @@ describe('user login', () => {
         expect(res.body.user).toHaveProperty('_id');
     })
 
-    it('returns error if user not found or password invalid', async() => {
+    it('returns errors if user not found or wrong password)', async() => {
         await userLogin({
             username: 'idontexist',
             password: '12345678'

@@ -30,7 +30,7 @@ beforeAll(async() => {
     authorization = `Bearer ${res.body.token}`;
 
     const res2 = await request(app)
-    .post('/chat/new')
+    .post('/chat')
     .expect('Content-Type', /json/)
     .set('Authorization', authorization)
     .send({
@@ -60,7 +60,7 @@ async function postMessage(data, status, chatId = chat._id, auth = authorization
 describe('posting messages in a chat', () => {
     it('should post valid message', async() => {
         await postMessage({
-            content: 'this is a valid message, hello :>'
+            content: 'this is a valid message, hello there'
         }, 200)
     })
 

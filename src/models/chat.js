@@ -4,7 +4,10 @@ const Schema = mongoose.Schema;
 const ChatSchema = new Schema({
     title: {type: String, required: true, minLength: 1, maxLength: 50},
     description: {type: String, minLength: 1, maxLength: 200},
-    members: [{type: Schema.Types.ObjectId, ref: 'User', required: true}],
+    members: [{
+        member: {type: Schema.Types.ObjectId, ref: 'User', required: true},
+        isAdmin: {type: Boolean, default: false}
+    }],
     messages: [{type: Schema.Types.ObjectId, ref: 'Message'}],
     created: {type: Date, default: Date.now},
     pictureUrl: {type: String},

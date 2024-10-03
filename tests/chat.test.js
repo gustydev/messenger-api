@@ -4,6 +4,25 @@ const User = require('../src/models/user')
 const Chat = require('../src/models/chat')
 
 let authorization = '';
+let updatedChat;
+
+async function createChat(data, status, auth = authorization) {
+    return await request(app)
+    .post('/chat')
+    .expect('Content-Type', /json/)
+    .set('Authorization', auth)
+    .send(data)
+    .expect(status);
+};
+
+async function updateChat(data, status, chatId, auth = authorization) {
+    return await request(app)
+    .put(`/chat/${chatId}`)
+    .expect('Content-Type', /json/)
+    .set('Authorization', auth)
+    .send(data)
+    .expect(status);
+};
 
 beforeAll(async() => {
     await connectDB();
@@ -25,6 +44,10 @@ beforeAll(async() => {
     .expect(200)
 
     authorization = `Bearer ${res.body.token}`;
+
+    const res2 = await createChat({title: 'temporary title'}, 200)
+
+    updatedChat = res2.body.chat;
 });
 
 afterAll(async() => {
@@ -33,18 +56,11 @@ afterAll(async() => {
     await disconnectDB()
 })
 
-async function createChat(data, status, auth = authorization) {
-    return await request(app)
-    .post('/chat/new')
-    .expect('Content-Type', /json/)
-    .set('Authorization', auth)
-    .send(data)
-    .expect(status);
-};
-
 describe('new chat', () => {
-    it('creates new chat', async() => {
-        await createChat({title: 'Test Title'}, 200)
+    it('creates new chat with creator as admin', async() => {
+        const res = await createChat({title: 'Test Title'}, 200)
+
+        expect(res.body.chat.members[0].isAdmin).toBeTruthy();
     })
 
     it('allows chat to be set as public or private', async() => {
@@ -85,5 +101,19 @@ describe('new chat', () => {
 
     it('returns error on invalid jwt', async() => {
         await createChat({title: 'test title'}, 400, 'Bearer not.a.token')
+    })
+})
+
+describe('update chat', () => {
+    it('updates chat with valid inputs', async() => {
+        await updateChat({
+            title: 'New Title',
+            description: 'new desc',
+            public: true
+        }, 200, updatedChat._id)
+
+        await updateChat({
+            description: 'updating just the description this time',
+        }, 200, updatedChat._id)
     })
 })

@@ -32,7 +32,7 @@ const userRoute = require('../src/routes/user');
 const chatRoute = require('../src/routes/chat')
 
 app.use("/user", userRoute);
-app.use('/chat', chatRoute)
+app.use("/chat", chatRoute)
 
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', 'false')
