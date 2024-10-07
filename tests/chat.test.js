@@ -108,21 +108,29 @@ describe('new chat', () => {
     })
 
     it('returns error on invalid jwt', async() => {
-        await createChat({title: 'test title'}, 400, 'Bearer not.a.token')
+        await createChat({title: 'test title'}, 401, 'Bearer not.a.token')
     })
 })
 
 describe('update chat info', () => {
     it('updates chat with valid inputs', async() => {
-        await updateChat({
+        const res = await updateChat({
             title: 'New Title',
             description: 'new desc',
             public: true
         }, 200)
 
-        await updateChat({
+        expect(res.body.chat.title).toBe('New Title')
+        expect(res.body.chat.description).toBe('new desc')
+        expect(res.body.chat.public).toBeTruthy();
+
+        const res2 = await updateChat({
             description: 'updating just the description this time',
         }, 200)
+
+        expect(res2.body.chat.description).toBe('updating just the description this time')
+        expect(res2.body.chat.title).toBe('New Title')
+        expect(res2.body.chat.public).toBeTruthy();
     })
 
     it('rejects invalid inputs when updating', async() => {
@@ -135,7 +143,7 @@ describe('update chat info', () => {
     it('rejects updating if jwt is invalid', async() => {
         await updateChat({
             title: 'random'
-        }, 400, updatedChat._id, 'Bearer not.a.token')
+        }, 401, updatedChat._id, 'Bearer not.a.token')
     })
 
     it('rejects updating if user is not in chat', async() => {

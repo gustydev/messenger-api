@@ -19,7 +19,9 @@ const UserSchema = new Schema({
 UserSchema.pre('validate', async function(next) {
     const usernameTaken = await mongoose.model('User').findOne({username: this.username})
     if (usernameTaken) {
-        return next(new Error('Username already taken'))
+        const error = new Error('Username already taken')
+        error.statusCode = 400;
+        return next(error)
     }
 
     next();

@@ -1,19 +1,40 @@
 class UnauthorizedError extends Error {
-    constructor(message) {
+  constructor(message = 'Unauthorized') {
       super(message);
       this.statusCode = 401;
-      this.name = 'UnauthorizedError'
-      this.msg = message.message || 'Unauthorized'
-    }
-}
-
-class InvalidInputError extends Error {
-  constructor(message) {
-    super(message)
-    this.statusCode = 400;
-    this.name = message.name || 'InvalidInputError' // Either "JsonWebTokenError" or the more generic "InvalidInputError"
-    this.msg = message.errors || message.message; // Either the validation input errors array or the invalid token message
+      this.name = 'UnauthorizedError';
   }
 }
 
-module.exports = { UnauthorizedError, InvalidInputError }
+class ValidationError extends Error {
+  constructor(errors) {
+    let fields = [];
+
+    errors.forEach((e) => {
+      fields.push(e.path)
+    }) 
+
+    super(`Failed to validate user inputs (${fields.join(', ')})`)
+    this.statusCode = 400;
+    this.msg = errors;
+  }
+}
+
+class InvalidTokenError extends Error {
+  constructor(message = 'Invalid or expired token') {
+    super(message);
+    this.statusCode = 401;
+    this.msg = message;
+  }
+}
+
+class NotFoundError extends Error {
+  constructor(message) {
+    super(message);
+    this.statusCode = 404;
+    this.name = 'NotFoundError'
+    this.msg = message.message || 'Not found'
+  }
+}
+
+module.exports = { UnauthorizedError, ValidationError, InvalidTokenError, NotFoundError }

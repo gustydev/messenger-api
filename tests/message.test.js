@@ -90,6 +90,6 @@ describe('posting messages in a chat', () => {
     it('return error on invalid jwt', async() => {
         await postMessage({
             content: 'hi'
-        }, 400, chat._id, 'Bearer not.a.token')
+        }, 401, chat._id, 'Bearer not.a.token')
     })
 })

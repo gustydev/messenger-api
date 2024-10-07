@@ -5,7 +5,7 @@ const asyncHandler = require('express-async-handler');
 const Chat = require('../models/chat');
 const User = require('../models/user')
 const Message = require('../models/message')
-const { InvalidInputError, UnauthorizedError } = require('../utils/customErrors');
+const { ValidationError, UnauthorizedError, NotFoundError, InvalidTokenError } = require('../utils/customErrors');
 
 exports.getChats = asyncHandler(async function(req, res, next) {
     const chats = await Chat.find();
@@ -56,16 +56,15 @@ exports.newChat = [
         const errors = validationResult(req)
 
         if (!errors.isEmpty()) {
-            throw new InvalidInputError(errors);
+            throw new ValidationError(errors.array());
         }
-
-        const token = req.headers['authorization'].split(' ')[1];
 
         let decoded;
         try {
-            decoded = jwt.verify(token, process.env.SECRET);
+            const token = req.headers['authorization'].split(' ')[1];
+            decoded = jwt.verify(token, process.env.SECRET); 
         } catch (error) {
-            throw new InvalidInputError(error);
+            throw new InvalidTokenError()
         }
 
         const creator = await User.findById(decoded.id);
@@ -108,36 +107,35 @@ exports.updateChat = [
         const errors = validationResult(req)
 
         if (!errors.isEmpty()) {
-            throw new InvalidInputError(errors);
+            throw new ValidationError(errors.array());
         }
-
-        const token = req.headers['authorization'].split(' ')[1];
 
         let decoded;
         try {
+            const token = req.headers['authorization'].split(' ')[1];
             decoded = jwt.verify(token, process.env.SECRET); 
+            // decodes jwt of who sent request (may not be an admin or even in the chat)
         } catch (error) {
-            throw new InvalidInputError(error);
+            throw new InvalidTokenError()
         }
-        // decodes the jwt of who requested the update (not necessarily an admin or even in the chat)
 
-        const chat = await Chat.findById(req.params.chatId);
+        const chatToBeUpdated = await Chat.findById(req.params.chatId);
         const user = await User.findById(decoded.id)
 
-        const userInChat = chat.members.find((m) => m.member.equals(user._id));
+        const userInChat = chatToBeUpdated.members.find((m) => m.member.equals(user._id));
 
         if (!userInChat || !userInChat.isAdmin) {
             // Reject put request if user is not in chat or is not an admin
-            throw new UnauthorizedError({message: 'User is not in chat or is not a chat admin'});
+            throw new UnauthorizedError('User is not in chat or is not a chat admin');
         }
 
         const { title, description, public: isPublic } = req.body;
 
-        chat.title = title || chat.title;
-        chat.description = description || chat.description;
-        chat.public = isPublic || chat.public;
-
-        await chat.save();
+        const chat = await Chat.findByIdAndUpdate(req.params.chatId, {
+            title: title,
+            description: description,
+            public: isPublic
+        }, {new: true})
 
         return res.status(200).json({msg: 'Chat updated', chat})
     })
@@ -160,16 +158,15 @@ exports.postMessage = [
         const errors = validationResult(req)
 
         if (!errors.isEmpty()) {
-            throw new InvalidInputError(errors);
+            throw new ValidationError(errors.array());
         }
 
-        const token = req.headers['authorization'].split(' ')[1];
-        
         let decoded;
         try {
-            decoded = jwt.verify(token, process.env.SECRET);
+            const token = req.headers['authorization'].split(' ')[1];
+            decoded = jwt.verify(token, process.env.SECRET); 
         } catch (error) {
-            throw new InvalidInputError(error)
+            throw new InvalidTokenError()
         }
 
         const poster = await User.findById(decoded.id);

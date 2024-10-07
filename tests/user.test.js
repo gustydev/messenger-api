@@ -147,11 +147,44 @@ describe('update user', () => {
 
         expect(res.body.user.displayName).toEqual('Edited Guy')
         expect(res.body.user.bio).toEqual('Test text')
+
+        const res2 = await userUpdate({
+            displayName: 'Different Name'
+            // bio stays the same
+        }, 200)
+
+        expect(res2.body.user.displayName).toEqual('Different Name')
+        expect(res2.body.user.bio).toEqual('Test text')
     })
 
     it('rejects update if token is invalid', async() => {
         await userUpdate({
             displayName: 'something else'
-        }, 400, 'Bearer notatoken')
+        }, 401, 'Bearer notatoken')
+    })
+
+    it('rejects updating profile of different user', async() => {
+        await userRegister({username: 'evilguy', password: 'thedevil666', confirmPassword: 'thedevil666'}, 200);
+        const res = await userLogin({username: 'evilguy', password: 'thedevil666'}, 200);
+
+        await userUpdate({
+            displayName: 'ha ha ha',
+            bio: 'spam spam spam'
+        }, 401, `Bearer ${res.body.token}`)
+    })
+
+    it('rejects updating with invalid inputs', async() => {
+        await userUpdate({
+            displayName: 'E' // too short
+        }, 400);
+
+        await userUpdate({
+            displayName: 'lorem ipsum dolor sit amet consectetur adpiscing elit etc etc' // too long
+        }, 400)
+
+        await userUpdate({
+            // bio is too long (200+ chars)
+            bio: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium q'
+        }, 400)
     })
 })

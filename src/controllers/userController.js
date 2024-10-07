@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 const { body, validationResult } = require('express-validator');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user')
-const { UnauthorizedError, InvalidInputError } = require('../utils/customErrors.js')
+const { UnauthorizedError, ValidationError, InvalidTokenError } = require('../utils/customErrors.js')
 
 exports.userRegister = [
     body('username')
@@ -51,7 +51,7 @@ exports.userRegister = [
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
-            throw new InvalidInputError(errors);
+            throw new ValidationError(errors.array());
         }
 
         const hashedPass = await bcrypt.hash(req.body.password, 10)
@@ -97,7 +97,7 @@ exports.userLogin = [
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
-            throw new InvalidInputError(errors);
+            throw new ValidationError(errors.array());
         }
 
         const user = await User.findOne({username: req.body.username}).select('-password');
@@ -131,21 +131,21 @@ exports.userUpdate = [
     asyncHandler(async function(req, res, next) {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            throw new InvalidInputError(errors);
+            throw new ValidationError(errors.array());
         }
         
-        const token = req.headers['authorization'].split(' ')[1];
         let decoded;
         try {
+            const token = req.headers['authorization'].split(' ')[1];
             decoded = jwt.verify(token, process.env.SECRET); 
         } catch (error) {
-            throw new InvalidInputError(error)
+            throw new InvalidTokenError()
         }
 
-        const userCheck = await User.findById(req.params.userId);
+        const userToBeEdited = await User.findById(req.params.userId);
         
-        if (!userCheck._id.equals(decoded.id)) {
-            throw new UnauthorizedError({message: 'Cannot update someone else\'s profile'})
+        if (!userToBeEdited._id.equals(decoded.id)) {
+            throw new UnauthorizedError('Cannot update someone else\'s profile')
         }
 
         const user = await User.findByIdAndUpdate(req.params.userId, {

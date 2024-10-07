@@ -61,11 +61,22 @@ passport.use(
 );
 
 app.get('/', (req, res) => {
-    res.send('hi there :>')
+    res.send('hi there :>') // later replace with readme.md or similar view
 })
 
 app.use('/user', userRoute)
 app.use('/chat', chatRoute)
+
+// Catch common mongoose errors
+app.use((err, req, res, next) => {
+  if (err.name === 'CastError') {
+      return res.status(400).json({ err: {msg: 'Invalid ID format', statusCode: 400} });
+  }
+  if (err.name === 'ValidationError') {
+      return res.status(400).json({ err: {msg: 'Validation failed', errors: err.errors, statusCode: 400} });
+  }
+  next(err);
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
