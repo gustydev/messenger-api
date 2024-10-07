@@ -1,9 +1,11 @@
+require('dotenv').config();
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { body, validationResult } = require('express-validator');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user')
+const { UnauthorizedError, InvalidInputError } = require('../utils/customErrors.js')
 
 exports.userRegister = [
     body('username')
@@ -49,28 +51,24 @@ exports.userRegister = [
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
-            return res.status(400).json(errors)
+            throw new InvalidInputError(errors);
         }
 
-        try {
-            const hashedPass = await bcrypt.hash(req.body.password, 10)
+        const hashedPass = await bcrypt.hash(req.body.password, 10)
 
-            const user = new User({
-                username: req.body.username,
-                password: hashedPass,
-                displayName: req.body.displayName || undefined
-            });
+        const user = new User({
+            username: req.body.username,
+            password: hashedPass,
+            displayName: req.body.displayName || undefined
+        });
 
-            await user.save();
+        await user.save();
 
-            return res.status(200).json({msg: 'User created successfully', user: {
-                _id: user._id,
-                username: user.username,
-                displayName: user.displayName,
-            }})
-        } catch (error) {
-            return res.status(400).json(error)
-        }
+        return res.status(200).json({msg: 'User created successfully', user: {
+            _id: user._id,
+            username: user.username,
+            displayName: user.displayName,
+        }})
     })
 ]
 
@@ -99,20 +97,62 @@ exports.userLogin = [
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
-            return res.status(400).json(errors)
+            throw new InvalidInputError(errors);
         }
 
-        try {
-            const user = await User.findOne({username: req.body.username}).select('-password');
-            const token = jwt.sign({id: user._id}, process.env.SECRET, {expiresIn: '3d'});
-            
-            return res.status(200).json({
-                msg: 'Logged in succesfully! Token expires in 3 days',
-                token,
-                user
-            })
-        } catch (err) {
-            res.status(400).json(err)
-        }
+        const user = await User.findOne({username: req.body.username}).select('-password');
+        const token = jwt.sign({id: user._id}, process.env.SECRET, {expiresIn: '3d'});
+        
+        return res.status(200).json({
+            msg: 'Logged in succesfully! Token expires in 3 days',
+            token,
+            user
+        })
     })
 ];
+
+exports.userUpdate = [
+    body('displayName')
+    .optional()
+    .isString()
+    .withMessage('Display name must be a string')
+    .trim()
+    .isLength({min: 2, max: 30})
+    .withMessage('Display name must be between 2 and 30 characters'),
+
+    body('bio')
+    .optional()
+    .isString()
+    .withMessage('Bio must be a string')
+    .trim()
+    .isLength({max: 200})
+    .withMessage('Bio has a limit of 200 characters'),
+
+    asyncHandler(async function(req, res, next) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            throw new InvalidInputError(errors);
+        }
+        
+        const token = req.headers['authorization'].split(' ')[1];
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.SECRET); 
+        } catch (error) {
+            throw new InvalidInputError(error)
+        }
+
+        const userCheck = await User.findById(req.params.userId);
+        
+        if (!userCheck._id.equals(decoded.id)) {
+            throw new UnauthorizedError({message: 'Cannot update someone else\'s profile'})
+        }
+
+        const user = await User.findByIdAndUpdate(req.params.userId, {
+            bio: req.body.bio,
+            displayName: req.body.displayName
+        }, {new: true})
+
+        return res.status(200).json({msg: 'Profile updated!', user})
+    })
+]

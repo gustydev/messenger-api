@@ -2,15 +2,33 @@ const { app, request, connectDB, disconnectDB, clearDB, userRegister, userLogin 
 
 const User = require('../src/models/user');
 
+let updatedUser;
+let auth;
+
 beforeAll(async() => {
     await connectDB();
     await clearDB(User);
+
+    await userRegister({username: 'UpdateMe', password: '12345678', confirmPassword: '12345678'}, 200);
+
+    const res = await userLogin({username: 'UpdateMe', password: '12345678'}, 200);
+    updatedUser = res.body.user;
+    auth = `Bearer ${res.body.token}`;
 });
 
 afterAll(async() => {
     await clearDB(User);
     await disconnectDB()
 })
+
+async function userUpdate(data, status, authorization = auth, userId = updatedUser._id) {
+    return await request(app)
+    .put(`/user/${userId}`)
+    .expect('Content-Type', /json/)
+    .set('Authorization', authorization)
+    .send(data)
+    .expect(status)
+}
 
 describe('get user', () => {
     it('respond with user get', function(done) {
@@ -117,5 +135,23 @@ describe('user login', () => {
             username: 'TESTER',
             password: 'notthepass'
         }, 400)
+    })
+})
+
+describe('update user', () => {
+    it('updates user profile with valid data', async() => {
+        const res = await userUpdate({
+            displayName: 'Edited Guy',
+            bio: 'Test text'
+        }, 200)
+
+        expect(res.body.user.displayName).toEqual('Edited Guy')
+        expect(res.body.user.bio).toEqual('Test text')
+    })
+
+    it('rejects update if token is invalid', async() => {
+        await userUpdate({
+            displayName: 'something else'
+        }, 400, 'Bearer notatoken')
     })
 })

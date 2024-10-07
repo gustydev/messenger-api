@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const { InvalidInputError } = require('../utils/customErrors');
 
 const MessageSchema = new Schema({
     content: {type: String, maxLength: 250},
@@ -13,7 +14,7 @@ const MessageSchema = new Schema({
 
 MessageSchema.pre('validate', function(next) {
     if (!this.attachmentUrl && this.content.length < 1) {
-        return next(new Error('Message must have text or an attachment'))
+        return next(new InvalidInputError({message: 'Message must have text or an attachment'}))
     }
     next()
 })

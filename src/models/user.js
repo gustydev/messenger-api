@@ -6,7 +6,7 @@ const UserSchema = new Schema({
     password: {type: String, required: true, minLength: 8},
     displayName: {type: String, minLength: 2, maxLength: 30, default: function () {
         return this.username;
-    }},
+    }}, 
     joined: {type: Date, required: true, default: Date.now },
     lastSeen: {type: Date},
     profilePicUrl: {type: String},

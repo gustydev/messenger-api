@@ -74,14 +74,11 @@ app.use(function(req, res, next) {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.log(err)
-
+  console.error(err);
   const statusCode = err.statusCode || 500;
-  const error = err.message || 'Internal Server Error';
 
   res.status(statusCode).json({
-    error,
-    statusCode
+    err
   });
 });
 
