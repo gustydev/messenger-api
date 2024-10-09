@@ -7,8 +7,8 @@ router.get('/', function(req, res) {
 })
 
 router.get('/list') // lists all users
-router.get('/:userId')
-router.get('/:userId/friends')
+router.get('/:userId') // get user details
+router.get('/:userId/friends') // get user friends
 
 router.post('/register', controller.userRegister);
 

@@ -16,7 +16,7 @@ class ValidationError extends Error {
 
     super(`Failed to validate user inputs (${fields.join(', ')})`)
     this.statusCode = 400;
-    this.msg = errors;
+    this.details = errors;
   }
 }
 

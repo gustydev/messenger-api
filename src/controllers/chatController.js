@@ -101,7 +101,7 @@ exports.updateChat = [
     body('public')
     .optional()
     .isBoolean()
-    .withMessage('Chat public status must be true or false'),
+    .withMessage('Chat public status must be a boolean (true or false)'),
 
     asyncHandler(async function(req, res, next) {
         const errors = validationResult(req)

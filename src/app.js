@@ -85,12 +85,17 @@ app.use(function(req, res, next) {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error(err);
+  // console.error(err);
   const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
 
-  res.status(statusCode).json({
-    err
-  });
+  const error = {
+    statusCode,
+    message,
+    ...err
+  };
+
+  res.status(statusCode).json(error)
 });
 
 const port = process.env.PORT || 3000;

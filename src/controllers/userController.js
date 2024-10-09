@@ -40,7 +40,7 @@ exports.userRegister = [
     }),
 
     body('displayName')
-    .optional() // if not given in body, is set to the username
+    .optional({values: 'falsy'}) // considers falsy values optional (includes empty strings like "")
     .isString()
     .withMessage('Display name must be a string')
     .trim()
@@ -76,6 +76,7 @@ exports.userLogin = [
     body('username')
     .isString()
     .withMessage('Username must be a string')
+    .trim()
     .custom(async (value) => {
         const user = await User.findOne({username: value})
         if (!user) {
@@ -86,8 +87,14 @@ exports.userLogin = [
     body('password')
     .isString()
     .withMessage('Password must be a string')
+    .isLength({min: 8})
+    .withMessage('Password must be at least 8 characters long')
     .custom(async (value, {req}) => {
         const user = await User.findOne({username: req.body.username})
+        if (!user) {
+            return false;
+        }
+
         const match = await bcrypt.compare(value, user.password);
 
         if (!match) { throw new Error('Incorrect password, please try again.')}
