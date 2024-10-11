@@ -7,6 +7,12 @@ const asyncHandler = require('express-async-handler');
 const User = require('../models/user')
 const { UnauthorizedError, ValidationError, InvalidTokenError } = require('../utils/customErrors.js')
 
+exports.getUsersList = asyncHandler(async (req, res, next) => {
+    const users = await User.find();
+
+    return res.status(200).json(users);
+})
+
 exports.userRegister = [
     body('username')
     .isString()

@@ -14,7 +14,13 @@ exports.getChats = asyncHandler(async function(req, res, next) {
 })
 
 exports.getChatById = asyncHandler(async function(req, res, next) {
-    const chat = await Chat.findById(req.params.chatId);
+    const chat = await Chat.findById(req.params.chatId).populate({
+        path: 'messages',
+        populate: {
+            path: 'postedBy',
+            select: 'displayName'
+        }
+    });
 
     res.status(200).json(chat);
 })
@@ -145,6 +151,7 @@ exports.postMessage = [
     body('content')
     .isString()
     .withMessage('Message must be a string')
+    .trim()
     .isLength({max: 250})
     .withMessage('Max length of message: 250 characters'),
 
@@ -179,6 +186,11 @@ exports.postMessage = [
         })
 
         await msg.save();
+        await Chat.findByIdAndUpdate(req.params.chatId, {
+            $push: {
+                messages: msg
+            }
+        })
 
         return res.status(200).json({msg: 'Message posted', msg})
     })

@@ -6,7 +6,7 @@ router.get('/', function(req, res) {
     res.json({msg: 'user get'})
 })
 
-router.get('/list') // lists all users
+router.get('/list', controller.getUsersList) // lists all users
 router.get('/:userId') // get user details
 router.get('/:userId/friends') // get user friends
 
