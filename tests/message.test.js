@@ -115,13 +115,17 @@ async function postWithAttachment(content, attachment = null, status, chatId = c
 describe('posting messages with attachments', () => {
     it('should post message with valid attachment', async() => {
         const res = await postWithAttachment('', 'public/images/banana.jpg', 200)
+
         expect(res.body.fileId).toBeTruthy()
+        expect(res.body.msg.attachment.type).toBe('image/jpeg')
 
         fileIds.push(res.body.fileId)
 
         // should also accept non-images
         const res2 = await postWithAttachment('this one has a message AND an attachment', 'public/random.txt', 200) 
+
         expect(res2.body.fileId).toBeTruthy();
+        expect(res2.body.msg.attachment.type).toBe('text/plain')
 
         fileIds.push(res2.body.fileId)
     })

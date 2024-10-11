@@ -161,7 +161,13 @@ exports.postMessage = [
     .withMessage('Message must be a string')
     .trim()
     .isLength({max: 250})
-    .withMessage('Max length of message: 250 characters'),
+    .withMessage('Max length of message: 250 characters')
+    .custom((content, {req}) => {
+        if (!req.file && content.length < 1) {
+            throw new Error('Message must have text content or an attachment')
+        }
+        return true
+    }),
 
     param('chatId')
     .custom(async (value) => {
@@ -211,7 +217,10 @@ exports.postMessage = [
             content: req.body.content,
             chat: await Chat.findById(req.params.chatId),
             postedBy: poster,
-            attachmentUrl: fileUrl
+            attachment: {
+                url: fileUrl,
+                type: req.file?.mimetype
+            }
         })
 
         await msg.save();
