@@ -6,11 +6,23 @@ const { body, validationResult } = require('express-validator');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user')
 const { UnauthorizedError, ValidationError, InvalidTokenError } = require('../utils/customErrors.js')
+const multer = require('multer')
+const upload = multer({storage: multer.memoryStorage(), limits: {fileSize: 3 * 1024 * 1024}})
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+    secure: true
+});
 
 exports.getUsersList = asyncHandler(async (req, res, next) => {
     const users = await User.find();
 
     return res.status(200).json(users);
+})
+
+exports.getUserDetails = asyncHandler(async (req, res, next) => {
+    const user = await User.findById(req.params.userId)
+
+    return res.status(200).json(user)
 })
 
 exports.userRegister = [
@@ -125,6 +137,8 @@ exports.userLogin = [
 ];
 
 exports.userUpdate = [
+    upload.single('pic'),
+    
     body('displayName')
     .optional()
     .isString()
@@ -161,9 +175,23 @@ exports.userUpdate = [
             throw new UnauthorizedError('Cannot update someone else\'s profile')
         }
 
+        let imgUrl = '';
+
+        if (req.file) {
+            await new Promise((resolve) => {
+                cloudinary.uploader.upload_stream({resource_type: 'auto'}, (error, result) => {
+                    return resolve(result)
+                }).end(req.file.buffer)
+            }).then(result => {
+                console.log('Buffer uplodaded: ', result.public_id)
+                imgUrl = result.secure_url
+            })
+        }
+
         const user = await User.findByIdAndUpdate(req.params.userId, {
             bio: req.body.bio,
-            displayName: req.body.displayName
+            displayName: req.body.displayName,
+            profilePicUrl: imgUrl
         }, {new: true})
 
         return res.status(200).json({msg: 'Profile updated!', user})

@@ -6,8 +6,8 @@ router.get('/', function(req, res) {
     res.json({msg: 'user get'})
 })
 
-router.get('/list', controller.getUsersList) // lists all users
-router.get('/:userId') // get user details
+router.get('/list', controller.getUsersList)
+router.get('/:userId', controller.getUserDetails)
 router.get('/:userId/friends') // get user friends
 
 router.post('/register', controller.userRegister);

@@ -188,3 +188,15 @@ describe('update user', () => {
         }, 400)
     })
 })
+
+describe('uploading profile picture', () => {
+    it.only('upload profile picture with valid image file', async() => {
+        const res = await request(app)
+        .put(`/user/${updatedUser._id}`)
+        .set('Authorization', auth)
+        .attach('pic', 'public/images/banana.jpg') // JPG file with less than 3MB = valid
+        .expect(200)
+
+        expect(res.body.user.profilePicUrl).toBeTruthy();
+    })
+})
