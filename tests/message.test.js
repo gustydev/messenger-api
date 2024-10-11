@@ -1,4 +1,8 @@
 const { app, request, connectDB, disconnectDB, clearDB } = require('./setup');
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+    secure: true
+});
 
 const User = require('../src/models/user')
 const Chat = require('../src/models/chat')
@@ -6,6 +10,7 @@ const Message = require('../src/models/message')
 
 let authorization;
 let chat;
+const fileIds = []; // array of uploaded file id's to be cleared after tests
 
 beforeAll(async() => {
     await connectDB();
@@ -42,6 +47,10 @@ beforeAll(async() => {
 });
 
 afterAll(async() => {
+    // need to delete separately because cloudinary only deletes one type (image, raw) at a time
+    await cloudinary.uploader.destroy(fileIds[0], {resource_type: 'image'})
+    await cloudinary.uploader.destroy(fileIds[1], {resource_type: 'raw'})
+
     await clearDB(User);
     await clearDB(Chat);
     await clearDB(Message);
@@ -91,5 +100,39 @@ describe('posting messages in a chat', () => {
         await postMessage({
             content: 'hi'
         }, 401, chat._id, 'Bearer not.a.token')
+    })
+})
+
+async function postWithAttachment(content, attachment = null, status, chatId = chat._id, auth = authorization) {
+    return await request(app)
+    .post(`/chat/${chatId}/message`)
+    .set('Authorization', auth)
+    .field('content', content)
+    .attach('attachment', attachment)
+    .expect(status)
+}
+
+describe('posting messages with attachments', () => {
+    it('should post message with valid attachment', async() => {
+        const res = await postWithAttachment('', 'public/images/banana.jpg', 200)
+        expect(res.body.fileId).toBeTruthy()
+
+        fileIds.push(res.body.fileId)
+
+        // should also accept non-images
+        const res2 = await postWithAttachment('this one has a message AND an attachment', 'public/random.txt', 200) 
+        expect(res2.body.fileId).toBeTruthy();
+
+        fileIds.push(res2.body.fileId)
+    })
+
+    it('rejects invalid attachements', async() => {
+        await postWithAttachment('árvore', 'public/árvore.txt', 500) // this txt file has 0 bytes (not accepted)
+
+        await postWithAttachment('bananas', 'public/images/bananas.jpg', 500) // this image is too big (over 3MB)
+    })
+
+    it('rejects comments with no content or attachment', async() => {
+        await postWithAttachment('', '', 400);
     })
 })

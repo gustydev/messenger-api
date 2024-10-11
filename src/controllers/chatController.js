@@ -6,6 +6,12 @@ const Chat = require('../models/chat');
 const User = require('../models/user')
 const Message = require('../models/message')
 const { ValidationError, UnauthorizedError, NotFoundError, InvalidTokenError } = require('../utils/customErrors');
+const multer = require('multer')
+const upload = multer({storage: multer.memoryStorage(), limits: {fileSize: 3 * 1024 * 1024}})
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+    secure: true
+});
 
 exports.getChats = asyncHandler(async function(req, res, next) {
     const chats = await Chat.find();
@@ -148,6 +154,8 @@ exports.updateChat = [
 ]
 
 exports.postMessage = [
+    upload.single('attachment'),
+    
     body('content')
     .isString()
     .withMessage('Message must be a string')
@@ -178,11 +186,32 @@ exports.postMessage = [
 
         const poster = await User.findById(decoded.id);
 
+        let fileUrl;
+        let fileId;
+
+        if (req.file) {
+            if (req.file.size === 0) {
+                const error = new Error('File is too small (O bytes)')
+                error.statusCode = 500;
+                throw error;
+            }
+            
+            await new Promise((resolve) => {
+                cloudinary.uploader.upload_stream({resource_type: 'auto'}, (error, result) => {
+                    return resolve(result)
+                }).end(req.file.buffer)
+            }).then(result => {
+                console.log('Buffer uplodaded: ', result.public_id)
+                fileUrl = result.secure_url
+                fileId = result.public_id
+            })
+        }
+
         const msg = new Message({
             content: req.body.content,
             chat: await Chat.findById(req.params.chatId),
-            postedBy: poster
-            // i'll work on attachments later
+            postedBy: poster,
+            attachmentUrl: fileUrl
         })
 
         await msg.save();
@@ -192,6 +221,10 @@ exports.postMessage = [
             }
         })
 
-        return res.status(200).json({msg: 'Message posted', msg})
+        if (process.env.NODE_ENV !== 'test') {
+            fileId = null;
+        }
+
+        return res.status(200).json({msg: 'Message posted', msg, fileId})
     })
 ]   

@@ -22,9 +22,8 @@ beforeAll(async() => {
 });
 
 afterAll(async() => {
-    imageIds.forEach(async (id) => {
-        await cloudinary.uploader.destroy(id)
-    })
+    await cloudinary.api.delete_resources(imageIds)
+
     await clearDB(User);
     await disconnectDB();
 })

@@ -185,6 +185,12 @@ exports.userUpdate = [
                 throw error;
             }
 
+            if (req.file.size === 0) {
+                const error = new Error('File is too small (O bytes)')
+                error.statusCode = 500;
+                throw error;
+            }
+
             await new Promise((resolve) => {
                 cloudinary.uploader.upload_stream({resource_type: 'image'}, (error, result) => {
                     return resolve(result)
@@ -206,7 +212,7 @@ exports.userUpdate = [
             // Only need the imgId for deleting images from cloud after tests
             imgId = null;
         }
-
+        
         return res.status(200).json({msg: 'Profile updated!', user, imgId})
     })
 ]
