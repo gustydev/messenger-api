@@ -175,16 +175,24 @@ exports.userUpdate = [
             throw new UnauthorizedError('Cannot update someone else\'s profile')
         }
 
-        let imgUrl = '';
+        let imgUrl;
+        let imgId;
 
         if (req.file) {
+            if (!req.file.mimetype.startsWith('image/')) {
+                const error = new Error('Cannot upload non-image as a profile picture')
+                error.statusCode = 400;
+                throw error;
+            }
+
             await new Promise((resolve) => {
-                cloudinary.uploader.upload_stream({resource_type: 'auto'}, (error, result) => {
+                cloudinary.uploader.upload_stream({resource_type: 'image'}, (error, result) => {
                     return resolve(result)
                 }).end(req.file.buffer)
             }).then(result => {
                 console.log('Buffer uplodaded: ', result.public_id)
                 imgUrl = result.secure_url
+                imgId = result.public_id
             })
         }
 
@@ -194,6 +202,11 @@ exports.userUpdate = [
             profilePicUrl: imgUrl
         }, {new: true})
 
-        return res.status(200).json({msg: 'Profile updated!', user})
+        if (process.env.NODE_ENV !== 'test') {
+            // Only need the imgId for deleting images from cloud after tests
+            imgId = null;
+        }
+
+        return res.status(200).json({msg: 'Profile updated!', user, imgId})
     })
 ]

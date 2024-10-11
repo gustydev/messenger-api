@@ -1,9 +1,14 @@
 const { app, request, connectDB, disconnectDB, clearDB, userRegister, userLogin } = require('./setup');
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+    secure: true
+});
 
 const User = require('../src/models/user');
 
 let updatedUser;
 let auth;
+const imageIds = []; // array of cloudinary public image id's to be cleaned up after tests
 
 beforeAll(async() => {
     await connectDB();
@@ -17,8 +22,11 @@ beforeAll(async() => {
 });
 
 afterAll(async() => {
+    imageIds.forEach(async (id) => {
+        await cloudinary.uploader.destroy(id)
+    })
     await clearDB(User);
-    await disconnectDB()
+    await disconnectDB();
 })
 
 async function userUpdate(data, status, authorization = auth, userId = updatedUser._id) {
@@ -189,14 +197,35 @@ describe('update user', () => {
     })
 })
 
-describe('uploading profile picture', () => {
-    it.only('upload profile picture with valid image file', async() => {
-        const res = await request(app)
-        .put(`/user/${updatedUser._id}`)
-        .set('Authorization', auth)
-        .attach('pic', 'public/images/banana.jpg') // JPG file with less than 3MB = valid
-        .expect(200)
+async function uploadFile(path, status, authorization = auth, userId = updatedUser._id) {
+    return await request(app)
+    .put(`/user/${userId}`)
+    .set('Authorization', authorization)
+    .attach('pic', path)
+    .expect(status)
+}
 
-        expect(res.body.user.profilePicUrl).toBeTruthy();
+describe('uploading profile picture', () => {
+    it('update profile picture with valid image file', async() => {
+        const res = await uploadFile('public/images/banana.jpg', 200) // JPG file with less than 3MB = valid
+
+        const pfpUrl = res.body.user.profilePicUrl;
+        expect(pfpUrl).toBeTruthy();
+        
+        imageIds.push(res.body.imgId)
+    })
+
+    it('rejects uploading non image', async() => {
+        await uploadFile('public/árvore.txt', 400) // not an image
+    })
+
+    it('rejects uploading pics larger than 3MB', async() => {
+        const res = await uploadFile('public/images/bananas.jpg', 500) // bananas.jpg is too large (it's 4.6MB)
+        expect(res.body.code).toEqual('LIMIT_FILE_SIZE')
+    })
+
+    it('accepts gif uploads', async() => {
+        const res = await uploadFile('public/images/catJAM.gif', 200);
+        imageIds.push(res.body.imgId)
     })
 })

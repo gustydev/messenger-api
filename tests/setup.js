@@ -67,14 +67,28 @@ async function userLogin(data, status) {
     .expect(status)
 }
 
+app.use((err, req, res, next) => {
+    if (err.name === 'CastError') {
+        return res.status(400).json({ err: {msg: 'Invalid ID format', statusCode: 400} });
+    }
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({ err: {msg: 'Validation failed', errors: err.errors, statusCode: 400} });
+    }
+    next(err);
+  });
+
 // Global error handler
 app.use((err, req, res, next) => {
-    console.error('ERROR! ', err)
     const statusCode = err.statusCode || 500;
-  
-    res.status(statusCode).json({
-      err
-    });
+    const message = err.message || 'Internal Server Error';
+
+    const error = {
+      statusCode,
+      message,
+      ...err
+    };
+    console.error(error)
+    res.status(statusCode).json(error)
   });
 
 module.exports = {
