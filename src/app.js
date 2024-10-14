@@ -80,6 +80,10 @@ io.on('connection', async(socket) => {
     io.emit('message', data)
   })
 
+  socket.on('updateProfile', (data) => {
+    io.emit('updateProfile', data)
+  })
+
   socket.on('disconnect', async() => {
     await User.findByIdAndUpdate(userId, { status: 'Offline'}, {new: true})
     .then((user) => console.log(`@${user.username} is ${user.status}`))
