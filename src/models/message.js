@@ -6,6 +6,7 @@ const MessageSchema = new Schema({
     attachment: {
         url: {type: String},
         type: {type: String}
+        // might possibly need "size" as well, and "original name"
     },
     postedBy: {type: Schema.Types.ObjectId, ref: 'User', required: true},
     readBy: [{type: Schema.Types.ObjectId, ref: 'User'}],

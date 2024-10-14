@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const { createServer } = require('node:http');
 const app = express();
 const createError = require('http-errors');
 const cors = require('cors');
@@ -11,6 +12,9 @@ const ExtractJwt = require('passport-jwt').ExtractJwt;
 const passport = require('passport');
 const userRoute = require('./routes/user')
 const chatRoute = require('./routes/chat')
+const { Server } = require('socket.io');
+
+const server = createServer(app);
 
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', 'false')
@@ -36,6 +40,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 }
 
+const io = new Server(server);
 app.use(cors(corsOptions));
 
 app.use(express.json());
@@ -63,6 +68,18 @@ passport.use(
 app.get('/', (req, res) => {
     res.send('hi there :>') // later replace with readme.md or similar view
 })
+
+io.on('connection', async(socket) => {
+  const userId = socket.handshake.query.userId;
+
+  await User.findByIdAndUpdate(userId, { status: 'Online'}, {new: true})
+  .then((user) => console.log(`@${user.username} is ${user.status}`))
+
+  socket.on('disconnect', async() => {
+    await User.findByIdAndUpdate(userId, { status: 'Offline'}, {new: true})
+    .then((user) => console.log(`@${user.username} is ${user.status}`))
+  }); 
+});
 
 app.use('/user', userRoute)
 app.use('/chat', chatRoute)
@@ -99,4 +116,4 @@ app.use((err, req, res, next) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => {console.log(`App listening on port ${port}`)})
+server.listen(port, () => {console.log(`Server running on port ${port}`)})

@@ -21,7 +21,7 @@ class ValidationError extends Error {
 }
 
 class InvalidTokenError extends Error {
-  constructor(message = 'Invalid or expired token') {
+  constructor(message = 'Invalid or expired token. Please relog in and try again') {
     super(message);
     this.statusCode = 401;
     this.msg = message;
