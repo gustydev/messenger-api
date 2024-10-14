@@ -75,6 +75,11 @@ io.on('connection', async(socket) => {
   await User.findByIdAndUpdate(userId, { status: 'Online'}, {new: true})
   .then((user) => console.log(`@${user.username} is ${user.status}`))
 
+  socket.on('message', (data) => {
+    // data is the response body of message post
+    io.emit('message', data)
+  })
+
   socket.on('disconnect', async() => {
     await User.findByIdAndUpdate(userId, { status: 'Offline'}, {new: true})
     .then((user) => console.log(`@${user.username} is ${user.status}`))

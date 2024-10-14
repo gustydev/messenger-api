@@ -224,16 +224,22 @@ exports.postMessage = [
         })
 
         await msg.save();
-        await Chat.findByIdAndUpdate(req.params.chatId, {
+        const chat = await Chat.findByIdAndUpdate(req.params.chatId, {
             $push: {
                 messages: msg
             }
-        })
+        }, {new: true}).populate({
+            path: 'messages',
+            populate: {
+                path: 'postedBy',
+                select: 'displayName'
+            }
+        });
 
         if (process.env.NODE_ENV !== 'test') {
             fileId = null;
         }
 
-        return res.status(200).json({msg: 'Message posted', msg, fileId})
+        return res.status(200).json({msg: 'Message posted', msg, chat, fileId})
     })
 ]   
