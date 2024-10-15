@@ -233,21 +233,29 @@ exports.postMessage = [
         })
 
         await msg.save();
-        const chat = await Chat.findByIdAndUpdate(req.params.chatId, {
-            $push: {
-                messages: msg
-            }
-        }, {new: true}).populate({
+
+        const chatToUpdate = await Chat.findById(req.params.chatId);
+        
+        const isMember = chatToUpdate.members.some((m) => m.member.equals(poster._id))
+        if (!isMember) {
+            chatToUpdate.members.push({member: poster, isAdmin: false})
+        }
+
+        chatToUpdate.messages.push(msg);
+
+        const updated = await chatToUpdate.save()
+
+        if (process.env.NODE_ENV !== 'test') {
+            fileId = null;
+        }
+
+        const chat = await Chat.findById(updated._id).populate({
             path: 'messages',
             populate: {
                 path: 'postedBy',
                 select: 'displayName'
             }
         });
-
-        if (process.env.NODE_ENV !== 'test') {
-            fileId = null;
-        }
 
         return res.status(200).json({msg: 'Message posted', msg, chat, fileId})
     })

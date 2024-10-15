@@ -87,7 +87,7 @@ app.use((err, req, res, next) => {
       message,
       ...err
     };
-
+    console.error(error)
     res.status(statusCode).json(error)
   });
 

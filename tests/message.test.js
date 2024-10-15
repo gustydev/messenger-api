@@ -1,4 +1,4 @@
-const { app, request, connectDB, disconnectDB, clearDB } = require('./setup');
+const { app, request, connectDB, disconnectDB, clearDB, userRegister, userLogin } = require('./setup');
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
     secure: true
@@ -18,19 +18,13 @@ beforeAll(async() => {
     await clearDB(Chat);
     await clearDB(Message)
 
-    await request(app)
-    .post('/user/register')
-    .send({
+    await userRegister({
         username: 'test',
         password: '12345678',
         confirmPassword: '12345678'
-    })
-    .expect(200);
+    }, 200)
 
-    const res = await request(app)
-    .post('/user/login')
-    .send({username: 'test', password: '12345678'})
-    .expect(200)
+    const res = await userLogin({username: 'test', password: '12345678'}, 200)
 
     authorization = `Bearer ${res.body.token}`;
 
@@ -68,9 +62,42 @@ async function postMessage(data, status, chatId = chat._id, auth = authorization
 
 describe('posting messages in a chat', () => {
     it('should post valid message', async() => {
-        await postMessage({
+        const res = await postMessage({
             content: 'this is a valid message, hello there'
         }, 200)
+
+        console.log(res.body.chat.members)
+    })
+
+    it('posting message makes poster a chat member', async() => {
+        await userRegister({username: 'newMember', password: '12345678', confirmPassword: '12345678'}, 200);
+        const res1 = await userLogin({username: 'newMember', password: '12345678'}, 200);
+        const newMember = res1.body;
+
+        const res2 = await postMessage({
+            content: 'hi there'
+        }, 200, chat._id, `Bearer ${newMember.token}`)
+
+        const members = res2.body.chat.members
+
+        expect(members).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    member: newMember.user._id,
+                    isAdmin: false
+                })
+            ])
+        );
+
+        const res3 = await postMessage({
+            content: 'hi there again, this new message doesnt make me a member twice'
+        }, 200, chat._id, `Bearer ${newMember.token}`)
+
+        const memberCount = res3.body.chat.members.filter(
+            (m) => m.member === newMember.user._id
+        ).length;
+
+        expect(memberCount).toBe(1) // new member only once
     })
 
     it('returns errors on invalid content', async() => {
