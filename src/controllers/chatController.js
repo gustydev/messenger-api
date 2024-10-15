@@ -45,11 +45,14 @@ exports.getChatMembers = asyncHandler(async function(req, res, next) {
 
 exports.newChat = [
     body('title')
+    .if((value, {req}) => !req.body.dm) // Only validate title if chat is not a DM (dm is a falsy value, like undefined or false)
     .isString()
     .withMessage('Title must be a string')
     .trim()
-    .isLength({min: 1, max: 50})
-    .withMessage('Chat must have a title of 50 characters maximum'),
+    .isLength({min: 1})
+    .withMessage('Chat must have a title')
+    .isLength({max: 50})
+    .withMessage('Chat title must have at most 50 characters'),
 
     body('description')
     .optional()
@@ -63,6 +66,11 @@ exports.newChat = [
     .optional()
     .isBoolean()
     .withMessage('Chat public status must be true or false'),
+
+    body('dm')
+    .optional()
+    .isBoolean()
+    .withMessage("The 'dm' field must be true or false if specified"),
 
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req)
@@ -85,7 +93,8 @@ exports.newChat = [
             title: req.body.title,
             description: req.body.description,
             members: [{member: creator, isAdmin: true}],
-            public: req.body.public
+            public: req.body.public,
+            dm: req.body.dm
         })
 
         await chat.save();
