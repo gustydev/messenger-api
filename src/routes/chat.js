@@ -6,6 +6,7 @@ router.get('/list', controller.getChats)
 router.get('/:chatId', controller.getChatById)
 router.get('/:chatId/messages', controller.getChatMessages)
 router.get('/:chatId/members', controller.getChatMembers)
+router.get('/dm/:recipientId', controller.getDMChat)
 
 router.post('/:chatId/message', controller.postMessage)
 

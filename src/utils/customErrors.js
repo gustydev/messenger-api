@@ -8,13 +8,14 @@ class UnauthorizedError extends Error {
 
 class ValidationError extends Error {
   constructor(errors) {
-    let fields = [];
+    // let fields = [];
 
-    errors.forEach((e) => {
-      fields.push(e.path)
-    }) 
+    // errors.forEach((e) => {
+    //   fields.push(e.path)
+    // }) 
 
-    super(`Failed to validate user inputs (${fields.join(', ')})`)
+    // super(`Failed to validate user inputs (${fields.join(', ')})`)
+    super('Failed to validate user inputs')
     this.statusCode = 400;
     this.details = errors;
   }

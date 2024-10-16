@@ -23,9 +23,7 @@ const databaseUrl = process.env.DATABASE_URL;
 
 main()
 .then(async() => {
-  // await Chat.deleteMany();
-  // await Message.deleteMany();
-  // await User.deleteMany();
+
 })
 .catch((err) => console.log(err));
 
