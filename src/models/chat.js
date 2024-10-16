@@ -8,7 +8,7 @@ const ChatSchema = new Schema({
     description: {type: String, minLength: 1, maxLength: 200},
     members: [{
         member: {type: Schema.Types.ObjectId, ref: 'User', required: true},
-        isAdmin: {type: Boolean, default: false}
+        isAdmin: {type: Boolean}
     }],
     messages: [{type: Schema.Types.ObjectId, ref: 'Message'}],
     created: {type: Date, default: Date.now},

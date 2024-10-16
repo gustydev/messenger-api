@@ -72,6 +72,43 @@ exports.newChat = [
     .isBoolean()
     .withMessage("The 'dm' field must be true or false if specified"),
 
+    body('recipient')
+    .if((value, {req}) => req.body.dm) // only validate if it's a dm
+    .custom(async(value, {req}) => {
+        const recipient = await User.findById(value);
+        if (!recipient) {
+            throw new Error('Could not find user to DM')
+        }
+
+        let decoded;
+        try {
+            const token = req.headers['authorization'].split(' ')[1];
+            decoded = jwt.verify(token, process.env.SECRET); 
+        } catch (error) {
+            throw new InvalidTokenError()
+        }
+
+        const creator = await User.findById(decoded.id);
+
+        if (recipient._id.equals(creator._id)) {
+            throw new Error('Cannot create a DM chat with yourself')
+        }
+
+        const dm = await Chat.findOne({
+            dm: true,
+            $and: [
+                { 'members.member': creator },
+                { 'members.member': recipient }
+            ]
+        })
+
+        if (dm) {
+            throw new Error(`DM between users ${creator.username} and ${recipient.username} already created`)
+        }
+
+        return true
+    }),
+
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req)
 
@@ -89,10 +126,19 @@ exports.newChat = [
 
         const creator = await User.findById(decoded.id);
 
+        const members = [{member: creator}];
+
+        if (req.body.dm) {
+            const recipient = await User.findById(req.body.recipient)
+            members.push({member: recipient})
+        } else {
+            members[0].isAdmin = true; // admin status only makes sense for non-dm chats
+        }
+
         const chat = new Chat({
             title: req.body.title,
             description: req.body.description,
-            members: [{member: creator, isAdmin: true}],
+            members,
             public: req.body.public,
             dm: req.body.dm
         })

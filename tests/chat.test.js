@@ -5,6 +5,7 @@ const Chat = require('../src/models/chat')
 
 let authorization = '';
 let updatedChat;
+let admin;
 let regular;
 
 async function createChat(data, status, auth = authorization) {
@@ -37,7 +38,8 @@ beforeAll(async() => {
     }, 200)
 
     const res = await userLogin({username: 'admin', password: '12345678'}, 200)
-    authorization = `Bearer ${res.body.token}`;
+    admin = res.body;
+    authorization = `Bearer ${admin.token}`;
 
     await userRegister({
         username: 'regular',
@@ -169,5 +171,37 @@ describe('update chat info', () => {
         await updateChat({
             title: 'random'
         }, 401, updatedChat._id, `Bearer ${regular.token}`)
+    })
+})
+
+describe('create dm chat', () => {
+    it('creates a dm between two users', async() => {
+        // user "admin" creates a dm chat with user "regular"
+        await createChat({
+            dm: true,
+            recipient: regular.user._id
+        }, 200)
+    })
+
+    it('rejects creating dm if it already exists', async() => {
+        // this time, "regular" wants to create dm with "admin", which already exists
+        await createChat({
+            dm: true,
+            recipient: admin.user._id
+        }, 400, `Bearer ${regular.token}`)
+    })
+
+    it('rejects invalid inputs', async() => {
+        await createChat({
+            dm: 'yes' // not a boolean
+            // lacks a recipient
+        }, 400)
+    })
+
+    it.only('rejects creating dm with oneself', async() => {
+        await createChat({
+            dm: true,
+            recipient: admin.user._id
+        }, 400)
     })
 })
