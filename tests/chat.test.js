@@ -198,7 +198,7 @@ describe('create dm chat', () => {
         }, 400)
     })
 
-    it.only('rejects creating dm with oneself', async() => {
+    it('rejects creating dm with oneself', async() => {
         await createChat({
             dm: true,
             recipient: admin.user._id

@@ -140,7 +140,7 @@ exports.userUpdate = [
     upload.single('pic'),
     
     body('displayName')
-    .optional()
+    .optional({values: 'falsy'}) // considers empty string as optional
     .isString()
     .withMessage('Display name must be a string')
     .trim()
@@ -204,7 +204,7 @@ exports.userUpdate = [
 
         const user = await User.findByIdAndUpdate(req.params.userId, {
             bio: req.body.bio,
-            displayName: req.body.displayName,
+            displayName: req.body.displayName || userToBeEdited.username,
             profilePicUrl: imgUrl
         }, {new: true})
 

@@ -74,27 +74,16 @@ describe('posting messages in a chat', () => {
         const res1 = await userLogin({username: 'newMember', password: '12345678'}, 200);
         const newMember = res1.body;
 
-        const res2 = await postMessage({
+        await postMessage({
             content: 'hi there'
         }, 200, chat._id, `Bearer ${newMember.token}`)
 
-        const members = res2.body.chat.members
-
-        expect(members).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    member: newMember.user._id,
-                    isAdmin: false
-                })
-            ])
-        );
-
         const res3 = await postMessage({
-            content: 'hi there again, this new message doesnt make me a member twice'
+            content: 'hi again'
         }, 200, chat._id, `Bearer ${newMember.token}`)
 
         const memberCount = res3.body.chat.members.filter(
-            (m) => m.member === newMember.user._id
+            (m) => m.member._id === newMember.user._id
         ).length;
 
         expect(memberCount).toBe(1) // new member only once

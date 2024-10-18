@@ -13,6 +13,19 @@ cloudinary.config({
     secure: true
 });
 
+const chatPop = [
+    {
+        path: 'messages',
+        populate: {
+            path: 'postedBy',
+            select: 'displayName username profilePicUrl status postDate'
+        }
+    },
+    {
+        path: 'members.member'
+    }
+]
+
 exports.getChats = asyncHandler(async function(req, res, next) {
     const chats = await Chat.find().populate({
         path: 'members',
@@ -26,18 +39,7 @@ exports.getChats = asyncHandler(async function(req, res, next) {
 })
 
 exports.getChatById = asyncHandler(async function(req, res, next) {
-    const chat = await Chat.findById(req.params.chatId).populate([
-        {
-            path: 'messages',
-            populate: {
-                path: 'postedBy',
-                select: 'displayName'
-            }
-        },
-        {
-            path: 'members.member'
-        }
-    ]);    
+    const chat = await Chat.findById(req.params.chatId).populate(chatPop);    
 
     res.status(200).json(chat);
 })
@@ -332,18 +334,7 @@ exports.postMessage = [
             fileId = null;
         }
 
-        const chat = await Chat.findById(updated._id).populate([
-            {
-                path: 'messages',
-                populate: {
-                    path: 'postedBy',
-                    select: 'displayName'
-                }
-            },
-            {
-                path: 'members.member'
-            }
-        ]);    
+        const chat = await Chat.findById(updated._id).populate(chatPop);    
 
         return res.status(200).json({msg: 'Message posted', msg, chat, fileId})
     })
