@@ -18,6 +18,7 @@ beforeAll(async() => {
 
     const res = await userLogin({username: 'UpdateMe', password: '12345678'}, 200);
     updatedUser = res.body.user;
+
     auth = `Bearer ${res.body.token}`;
 });
 

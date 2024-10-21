@@ -65,6 +65,11 @@ exports.userRegister = [
     .isLength({min: 2, max: 30})
     .withMessage('Display name must be between 2 and 30 characters'),
 
+    body('demo')
+    .optional()
+    .isBoolean()
+    .withMessage('Demo must be set as true or false if provided'),
+
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
 
@@ -77,7 +82,8 @@ exports.userRegister = [
         const user = new User({
             username: req.body.username,
             password: hashedPass,
-            displayName: req.body.displayName || undefined
+            displayName: req.body.displayName || undefined,
+            demo: req.body.demo
         });
 
         await user.save();
@@ -129,7 +135,7 @@ exports.userLogin = [
         const token = jwt.sign({id: user._id}, process.env.SECRET, {expiresIn: '3d'});
         
         return res.status(200).json({
-            msg: 'Logged in succesfully! Token expires in 3 days',
+            msg: `Logged in succesfully! Token expires in 3 days`,
             token,
             user
         })
@@ -173,6 +179,10 @@ exports.userUpdate = [
         
         if (!userToBeEdited._id.equals(decoded.id)) {
             throw new UnauthorizedError('Cannot update someone else\'s profile')
+        }
+
+        if (userToBeEdited.demo) {
+            throw new UnauthorizedError('Cannot update demo account profile. Register for free to customize your profile!')
         }
 
         let imgUrl;

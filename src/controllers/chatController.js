@@ -162,6 +162,10 @@ exports.newChat = [
 
         const creator = await User.findById(decoded.id);
 
+        if (creator.demo) {
+            throw new UnauthorizedError('Demo account cannot create chat. Register for free to make chats!')
+        }
+
         const members = [{member: creator}];
 
         if (req.body.dm) {
@@ -291,6 +295,10 @@ exports.postMessage = [
                 const error = new Error('File is too small (O bytes)')
                 error.statusCode = 500;
                 throw error;
+            }
+
+            if (poster.demo) {
+                throw new UnauthorizedError('Demo accounts cannot post attachments in chat')
             }
             
             await new Promise((resolve) => {

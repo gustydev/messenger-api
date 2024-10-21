@@ -13,7 +13,8 @@ const UserSchema = new Schema({
     status: {type: String, required: true, default: 'Offline'},
     friends: [{type: Schema.Types.ObjectId, ref: 'User'}],
     bio: {type: String, minLength: 1, maxLength: 200},
-    messages: [{type: Schema.Types.ObjectId, ref: 'Message'}]
+    messages: [{type: Schema.Types.ObjectId, ref: 'Message'}],
+    demo: {type: Boolean, default: false}
 }, { collation: { locale: 'en_US', strength: 1 } }) // case insensitive unique indexes
 
 UserSchema.pre('validate', async function(next) {

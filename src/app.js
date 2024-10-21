@@ -23,7 +23,7 @@ const databaseUrl = process.env.DATABASE_URL;
 
 main()
 .then(async() => {
-
+  
 })
 .catch((err) => console.log(err));
 
@@ -69,9 +69,12 @@ app.get('/', (req, res) => {
 
 io.on('connection', async(socket) => {
   const userId = socket.handshake.query.userId;
+  const isDemo = socket.handshake.query.demo;
 
-  await User.findByIdAndUpdate(userId, { status: 'Online'}, {new: true})
-  .then((user) => console.log(`@${user.username} is ${user.status}`))
+  if (!isDemo) {
+    await User.findByIdAndUpdate(userId, { status: 'Online'}, {new: true})
+    .then((user) => console.log(`@${user.username} is ${user.status}`))
+  }
 
   socket.on('message', (data) => {
     // data is the response body of message post
@@ -83,8 +86,10 @@ io.on('connection', async(socket) => {
   })
 
   socket.on('disconnect', async() => {
-    await User.findByIdAndUpdate(userId, { status: 'Offline'}, {new: true})
-    .then((user) => console.log(`@${user.username} is ${user.status}`))
+    if (!isDemo) {
+      await User.findByIdAndUpdate(userId, { status: 'Offline'}, {new: true})
+      .then((user) => console.log(`@${user.username} is ${user.status}`))
+    }
   }); 
 });
 
