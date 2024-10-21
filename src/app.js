@@ -23,7 +23,7 @@ const databaseUrl = process.env.DATABASE_URL;
 
 main()
 .then(async() => {
-  
+
 })
 .catch((err) => console.log(err));
 
@@ -71,7 +71,7 @@ io.on('connection', async(socket) => {
   const userId = socket.handshake.query.userId;
   const isDemo = socket.handshake.query.demo;
 
-  if (!isDemo) {
+  if (isDemo === 'false') {
     await User.findByIdAndUpdate(userId, { status: 'Online'}, {new: true})
     .then((user) => console.log(`@${user.username} is ${user.status}`))
   }
@@ -86,7 +86,7 @@ io.on('connection', async(socket) => {
   })
 
   socket.on('disconnect', async() => {
-    if (!isDemo) {
+    if (isDemo === 'false') {
       await User.findByIdAndUpdate(userId, { status: 'Offline'}, {new: true})
       .then((user) => console.log(`@${user.username} is ${user.status}`))
     }
