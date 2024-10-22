@@ -17,6 +17,8 @@ const UserSchema = new Schema({
     demo: {type: Boolean, default: false}
 }, { collation: { locale: 'en_US', strength: 1 } }) // case insensitive unique indexes
 
+UserSchema.index({ username: 1 });
+
 UserSchema.pre('validate', async function(next) {
     const usernameTaken = await mongoose.model('User').findOne({username: this.username})
     if (usernameTaken) {

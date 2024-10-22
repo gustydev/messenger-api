@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const jwt = require('jsonwebtoken')
 const { body, param, validationResult } = require('express-validator');
 const asyncHandler = require('express-async-handler');
 const Chat = require('../models/chat');
@@ -57,15 +56,7 @@ exports.getChatMembers = asyncHandler(async function(req, res, next) {
 })
 
 exports.getDMChat = asyncHandler(async function(req, res, next) {
-    let decoded;
-    try {
-        const token = req.headers['authorization'].split(' ')[1];
-        decoded = jwt.verify(token, process.env.SECRET); 
-    } catch (error) {
-        throw new InvalidTokenError()
-    }
-
-    const requester = await User.findById(decoded.id);
+    const requester = await User.findById(req.user.id);
     const recipient = await User.findById(req.params.recipientId);
 
     const dm = await Chat.findOne({
@@ -116,15 +107,7 @@ exports.newChat = [
             throw new Error('Could not find user to DM')
         }
 
-        let decoded;
-        try {
-            const token = req.headers['authorization'].split(' ')[1];
-            decoded = jwt.verify(token, process.env.SECRET); 
-        } catch (error) {
-            throw new InvalidTokenError()
-        }
-
-        const creator = await User.findById(decoded.id);
+        const creator = await User.findById(req.user.id);
 
         if (recipient._id.equals(creator._id)) {
             throw new Error('Cannot create a DM chat with yourself')
@@ -152,15 +135,7 @@ exports.newChat = [
             throw new ValidationError(errors.array());
         }
 
-        let decoded;
-        try {
-            const token = req.headers['authorization'].split(' ')[1];
-            decoded = jwt.verify(token, process.env.SECRET); 
-        } catch (error) {
-            throw new InvalidTokenError()
-        }
-
-        const creator = await User.findById(decoded.id);
+        const creator = await User.findById(req.user.id);
 
         if (creator.demo) {
             throw new UnauthorizedError('Demo account cannot create chat. Register for free to make chats!')
@@ -217,17 +192,8 @@ exports.updateChat = [
             throw new ValidationError(errors.array());
         }
 
-        let decoded;
-        try {
-            const token = req.headers['authorization'].split(' ')[1];
-            decoded = jwt.verify(token, process.env.SECRET); 
-            // decodes jwt of who sent request (may not be an admin or even in the chat)
-        } catch (error) {
-            throw new InvalidTokenError()
-        }
-
         const chatToBeUpdated = await Chat.findById(req.params.chatId);
-        const user = await User.findById(decoded.id)
+        const user = await User.findById(req.user.id)
 
         const userInChat = chatToBeUpdated.members.find((m) => m.member.equals(user._id));
 
@@ -277,15 +243,7 @@ exports.postMessage = [
             throw new ValidationError(errors.array());
         }
 
-        let decoded;
-        try {
-            const token = req.headers['authorization'].split(' ')[1];
-            decoded = jwt.verify(token, process.env.SECRET); 
-        } catch (error) {
-            throw new InvalidTokenError()
-        }
-
-        const poster = await User.findById(decoded.id);
+        const poster = await User.findById(req.user.id);
 
         let fileUrl;
         let fileId;

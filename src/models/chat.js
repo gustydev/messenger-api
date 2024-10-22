@@ -17,4 +17,6 @@ const ChatSchema = new Schema({
     dm: {type: Boolean, default: false}
 })
 
+ChatSchema.index({ 'members.member': 1 });
+
 module.exports = mongoose.model('Chat', ChatSchema)

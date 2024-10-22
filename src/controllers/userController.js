@@ -6,7 +6,7 @@ const { body, validationResult } = require('express-validator');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user')
 const { UnauthorizedError, ValidationError, InvalidTokenError } = require('../utils/customErrors.js')
-const multer = require('multer')
+const multer = require('multer');
 const upload = multer({storage: multer.memoryStorage(), limits: {fileSize: 3 * 1024 * 1024}})
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
@@ -166,18 +166,10 @@ exports.userUpdate = [
         if (!errors.isEmpty()) {
             throw new ValidationError(errors.array());
         }
-        
-        let decoded;
-        try {
-            const token = req.headers['authorization'].split(' ')[1];
-            decoded = jwt.verify(token, process.env.SECRET); 
-        } catch (error) {
-            throw new InvalidTokenError()
-        }
 
         const userToBeEdited = await User.findById(req.params.userId);
-        
-        if (!userToBeEdited._id.equals(decoded.id)) {
+
+        if (!userToBeEdited._id.equals(req.user.id)) {
             throw new UnauthorizedError('Cannot update someone else\'s profile')
         }
 
