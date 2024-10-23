@@ -30,4 +30,10 @@ UserSchema.pre('validate', async function(next) {
     next();
 })
 
+UserSchema.pre('remove', async function(next) {
+    // upon deleting an user, also delete all of their messages
+    await Message.deleteMany({ postedBy: this._id });
+    next();
+});
+
 module.exports = mongoose.model('User', UserSchema);

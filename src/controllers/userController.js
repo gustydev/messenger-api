@@ -173,10 +173,6 @@ exports.userUpdate = [
             throw new UnauthorizedError('Cannot update someone else\'s profile')
         }
 
-        if (userToBeEdited.demo) {
-            throw new UnauthorizedError('Cannot update demo account profile. Register for free to customize your profile!')
-        }
-
         let imgUrl;
         let imgId;
 

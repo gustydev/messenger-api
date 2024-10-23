@@ -114,7 +114,6 @@ app.use(function(req, res, next) {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  // console.error(err);
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
@@ -123,6 +122,10 @@ app.use((err, req, res, next) => {
     message,
     ...err
   };
+
+  if (process.env.NODE_ENV === 'development') {
+    console.error(error)
+  }
 
   res.status(statusCode).json(error)
 });

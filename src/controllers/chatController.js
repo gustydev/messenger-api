@@ -12,6 +12,7 @@ cloudinary.config({
     secure: true
 });
 
+// Populates chat with needed info of messages and members
 const chatPop = [
     {
         path: 'messages',
@@ -24,6 +25,7 @@ const chatPop = [
         path: 'members.member'
     }
 ]
+
 
 exports.getChats = asyncHandler(async function(req, res, next) {
     const chats = await Chat.find().populate({
@@ -56,8 +58,10 @@ exports.getChatMembers = asyncHandler(async function(req, res, next) {
 })
 
 exports.getDMChat = asyncHandler(async function(req, res, next) {
-    const requester = await User.findById(req.user.id);
-    const recipient = await User.findById(req.params.recipientId);
+    const [requester, recipient] = await Promise.all([
+        User.findById(req.user.id),
+        User.findById(req.params.recipientId)
+    ])
 
     const dm = await Chat.findOne({
         dm: true,
@@ -102,12 +106,14 @@ exports.newChat = [
     body('recipient')
     .if((value, {req}) => req.body.dm) // only validate if it's a dm
     .custom(async(value, {req}) => {
-        const recipient = await User.findById(value);
+        const [creator, recipient] = await Promise.all([
+            User.findById(req.user.id),
+            User.findById(value),
+        ])
+
         if (!recipient) {
             throw new Error('Could not find user to DM')
         }
-
-        const creator = await User.findById(req.user.id);
 
         if (recipient._id.equals(creator._id)) {
             throw new Error('Cannot create a DM chat with yourself')
@@ -136,10 +142,6 @@ exports.newChat = [
         }
 
         const creator = await User.findById(req.user.id);
-
-        if (creator.demo) {
-            throw new UnauthorizedError('Demo account cannot create chat. Register for free to make chats!')
-        }
 
         const members = [{member: creator}];
 
@@ -192,8 +194,10 @@ exports.updateChat = [
             throw new ValidationError(errors.array());
         }
 
-        const chatToBeUpdated = await Chat.findById(req.params.chatId);
-        const user = await User.findById(req.user.id)
+        const [chatToBeUpdated, user] = await Promise.all([
+            Chat.findById(req.params.chatId),
+            User.findById(req.user.id)
+        ])
 
         const userInChat = chatToBeUpdated.members.find((m) => m.member.equals(user._id));
 
