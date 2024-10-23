@@ -30,35 +30,57 @@ const chatPop = [
     }
 ]
 
-
 exports.getChats = asyncHandler(async function(req, res, next) {
-    const chats = await Chat.find().populate({
-        path: 'members',
-        populate: {
-            path: 'member',
-            select: 'displayName'
-        }
-    });
+    const user = await User.findById(req.user.id);
+
+    // Returns only public chats OR chats the user is a member of
+    const chats = await Chat.find({
+        $or: [
+            {'members.member': user},
+            {public: true}
+        ]
+    }).populate(chatPop[1]);
 
     res.status(200).json(chats);
 })
 
 exports.getChatById = asyncHandler(async function(req, res, next) {
-    const chat = await Chat.findById(req.params.chatId).populate(chatPop);    
+    const [user, chat] = await Promise.all([
+        User.findById(req.user.id),
+        Chat.findById(req.params.chatId).populate(chatPop)
+    ])   
+
+    if (!chat.members.find((m) => m.member.equals(user._id)) && !chat.public) {
+        throw new UnauthorizedError('You are not allowed to view this private chat')
+    }
 
     res.status(200).json(chat);
 })
 
 exports.getChatMessages = asyncHandler(async function(req, res, next) {
-    const chat = await Chat.findById(req.params.chatId).select('messages').populate('messages');
+    const [user, chat] = await Promise.all([
+        User.findById(req.user.id),
+        Chat.findById(req.params.chatId).select('messages members').populate('messages')
+    ])
 
-    res.status(200).json(chat);
+    if (!chat.members.find((m) => m.member.equals(user._id)) && !chat.public) {
+        throw new UnauthorizedError("You are not allowed to view this private chat's messages")
+    }
+
+    res.status(200).json(chat.messages);
 })
 
 exports.getChatMembers = asyncHandler(async function(req, res, next) {
-    const chat = await Chat.findById(req.params.chatId).select('members').populate(chatPop[1]);
+    const [user, chat] = await Promise.all([
+        User.findById(req.user.id),
+        Chat.findById(req.params.chatId).select('members').populate(chatPop[1])
+    ])
 
-    res.status(200).json(chat);
+    if (!chat.members.find((m) => m.member.equals(user._id)) && !chat.public) {
+        throw new UnauthorizedError("You are not allowed to view this private chat's members")
+    }
+    
+    res.status(200).json(chat.members);
 })
 
 exports.getDMChat = asyncHandler(async function(req, res, next) {

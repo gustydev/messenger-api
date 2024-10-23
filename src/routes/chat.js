@@ -4,10 +4,10 @@ const controller = require('../controllers/chatController');
 const { validateToken } = require('../middlewares/validateToken')
 const { checkIfDemo } = require('../middlewares/checkIfDemo');
 
-router.get('/list', controller.getChats)
-router.get('/:chatId', controller.getChatById)
-router.get('/:chatId/messages', controller.getChatMessages)
-router.get('/:chatId/members', controller.getChatMembers)
+router.get('/list', validateToken, controller.getChats)
+router.get('/:chatId', validateToken, controller.getChatById)
+router.get('/:chatId/messages', validateToken, controller.getChatMessages)
+router.get('/:chatId/members', validateToken, controller.getChatMembers)
 router.get('/dm/:recipientId', validateToken, controller.getDMChat)
 
 router.post('/:chatId/message', validateToken, controller.postMessage) 

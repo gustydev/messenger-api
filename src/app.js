@@ -99,10 +99,10 @@ app.use('/chat', chatRoute)
 // Catch common mongoose errors
 app.use((err, req, res, next) => {
   if (err.name === 'CastError') {
-      return res.status(400).json({ err: {msg: 'Invalid ID format', statusCode: 400} });
+      return res.status(400).json({message: 'Invalid ID format', statusCode: 400});
   }
   if (err.name === 'ValidationError') {
-      return res.status(400).json({ err: {msg: 'Validation failed', errors: err.errors, statusCode: 400} });
+      return res.status(400).json({message: 'Validation failed', errors: err.errors, statusCode: 400});
   }
   next(err);
 });
