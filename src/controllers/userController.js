@@ -14,13 +14,13 @@ cloudinary.config({
 });
 
 exports.getUsersList = asyncHandler(async (req, res, next) => {
-    const users = await User.find();
+    const users = await User.find().select('-password')
 
     return res.status(200).json(users);
 })
 
 exports.getUserDetails = asyncHandler(async (req, res, next) => {
-    const user = await User.findById(req.params.userId)
+    const user = await User.findById(req.params.userId).select('-password')
 
     return res.status(200).json(user)
 })
@@ -204,7 +204,7 @@ exports.userUpdate = [
             bio: req.body.bio,
             displayName: req.body.displayName || userToBeEdited.username,
             profilePicUrl: imgUrl
-        }, {new: true})
+        }, {new: true}).select('-password')
 
         if (process.env.NODE_ENV !== 'test') {
             // Only need the imgId for deleting images from cloud after tests

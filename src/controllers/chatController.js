@@ -22,7 +22,11 @@ const chatPop = [
         }
     },
     {
-        path: 'members.member'
+        path: 'members',
+        populate: {
+            path: 'member',
+            select: 'displayName username'
+        }
     }
 ]
 
@@ -52,7 +56,7 @@ exports.getChatMessages = asyncHandler(async function(req, res, next) {
 })
 
 exports.getChatMembers = asyncHandler(async function(req, res, next) {
-    const chat = await Chat.findById(req.params.chatId).select('members').populate('members.member');
+    const chat = await Chat.findById(req.params.chatId).select('members').populate(chatPop[1]);
 
     res.status(200).json(chat);
 })
@@ -161,6 +165,8 @@ exports.newChat = [
         })
 
         await chat.save();
+        await chat.populate(chatPop[1]);
+
         return res.status(200).json({msg: 'Chat created', chat})
     })
 ]
@@ -212,7 +218,7 @@ exports.updateChat = [
             title: title,
             description: description,
             public: isPublic
-        }, {new: true})
+        }, {new: true}).populate(chatPop[1]);
 
         return res.status(200).json({msg: 'Chat updated', chat})
     })

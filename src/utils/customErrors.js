@@ -18,16 +18,14 @@ class InvalidTokenError extends Error {
   constructor(message = 'Invalid or expired token. Please relog in and try again') {
     super(message);
     this.statusCode = 401;
-    this.msg = message;
   }
 }
 
 class NotFoundError extends Error {
-  constructor(message) {
+  constructor(message = 'Not Found') {
     super(message);
     this.statusCode = 404;
     this.name = 'NotFoundError'
-    this.msg = message.message || 'Not found'
   }
 }
 
