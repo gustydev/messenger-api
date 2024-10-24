@@ -11,24 +11,12 @@ const UserSchema = new Schema({
     lastSeen: {type: Date},
     profilePicUrl: {type: String},
     status: {type: String, required: true, default: 'Offline'},
-    friends: [{type: Schema.Types.ObjectId, ref: 'User'}],
     bio: {type: String, minLength: 1, maxLength: 200},
     messages: [{type: Schema.Types.ObjectId, ref: 'Message'}],
     demo: {type: Boolean, default: false}
 }, { collation: { locale: 'en_US', strength: 1 } }) // case insensitive unique indexes
 
 UserSchema.index({ username: 1 });
-
-UserSchema.pre('validate', async function(next) {
-    const usernameTaken = await mongoose.model('User').findOne({username: this.username})
-    if (usernameTaken) {
-        const error = new Error('Username already taken')
-        error.statusCode = 400;
-        return next(error)
-    }
-
-    next();
-})
 
 UserSchema.pre('remove', async function(next) {
     // upon deleting an user, also delete all of their messages

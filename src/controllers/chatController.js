@@ -314,6 +314,9 @@ exports.postMessage = [
 
         await msg.save();
 
+        poster.messages.push(msg);
+        await poster.save();
+
         const chatToUpdate = await Chat.findById(req.params.chatId);
         
         const isMember = chatToUpdate.members.some((m) => m.member.equals(poster._id))

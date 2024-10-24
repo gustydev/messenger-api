@@ -73,7 +73,7 @@ io.on('connection', async(socket) => {
 
   if (isDemo === 'false') {
     await User.findByIdAndUpdate(userId, { status: 'Online'}, {new: true})
-    // .then((user) => console.log(`@${user.username} is ${user.status}`))
+    .then((user) => console.log(user.messages))
   }
 
   socket.on('message', (data) => {
@@ -87,8 +87,8 @@ io.on('connection', async(socket) => {
 
   socket.on('disconnect', async() => {
     if (isDemo === 'false') {
-      await User.findByIdAndUpdate(userId, { status: 'Offline'}, {new: true})
-      // .then((user) => console.log(`@${user.username} is ${user.status}`))
+      await User.findByIdAndUpdate(userId, { status: 'Offline', lastSeen: new Date()}, {new: true})
+      // .then((user) => console.log(`@${user.username} is ${user.status} (last seen: ${user.lastSeen})`))
     }
   }); 
 });
