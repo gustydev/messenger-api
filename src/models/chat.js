@@ -13,7 +13,6 @@ const ChatSchema = new Schema({
     }],
     messages: [{type: Schema.Types.ObjectId, ref: 'Message'}],
     created: {type: Date, default: Date.now},
-    pictureUrl: {type: String},
     public: {type: Boolean, default: false},
     dm: {type: Boolean, default: false}
 })

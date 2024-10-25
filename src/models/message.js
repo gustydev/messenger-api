@@ -9,9 +9,7 @@ const MessageSchema = new Schema({
         // might possibly need "size" as well, and "original name"
     },
     postedBy: {type: Schema.Types.ObjectId, ref: 'User', required: true},
-    readBy: [{type: Schema.Types.ObjectId, ref: 'User'}],
     postDate: {type: Date, default: Date.now},
-    editDate: {type: Date},
     chat: {type: Schema.Types.ObjectId, ref: 'Chat', required: true}
 })
 
