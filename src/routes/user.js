@@ -17,6 +17,6 @@ router.post('/login', controller.userLogin)
 
 router.put('/:userId', validateToken, checkIfDemo, controller.userUpdate) // update user details
 
-router.delete('/:userId') // delete an user
+router.delete('/:userId', validateToken, checkIfDemo, controller.userDelete) // delete an user
 
 module.exports = router;

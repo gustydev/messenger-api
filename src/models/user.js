@@ -23,7 +23,9 @@ UserSchema.pre('remove', async function(next) {
             // upon deleting an user, also delete all of their messages
             Message.deleteMany({ postedBy: this._id }),
             // and any dm's they have with other users
-            Chat.deleteMany({ dm: true, 'members.member': this._id})
+            Chat.deleteMany({ dm: true, 'members.member': this._id}),
+            // as well as removing them from any member list they were in
+            Chat.updateMany({'members.member': this._id}, {$pull: {members: {member: this._id}}})
         ])
         next()
     } catch (err) {

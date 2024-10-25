@@ -215,3 +215,15 @@ exports.userUpdate = [
         return res.status(200).json({msg: 'Profile updated!', user, imgId})
     })
 ]
+
+exports.userDelete = asyncHandler(async(req, res, next) => {
+    const userToBeDeleted = await User.findById(req.params.userId);
+
+    if (!userToBeDeleted._id.equals(req.user.id)) {
+        throw new UnauthorizedError('Cannot delete someone else\'s account!')
+    }
+
+    const user = await User.findOneAndDelete({_id: req.params.userId});
+    console.log(`User ${req.params.userId} deleted successfully (requested by: ${req.user.id})`)
+    return res.status(200).json({msg: 'User deleted', user})
+})

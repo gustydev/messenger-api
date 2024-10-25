@@ -5,6 +5,8 @@ cloudinary.config({
 });
 
 const User = require('../src/models/user');
+const Message = require('../src/models/message')
+const Chat = require('../src/models/chat')
 
 let updatedUser;
 let auth;
@@ -23,8 +25,10 @@ beforeAll(async() => {
 });
 
 afterAll(async() => {
-    await cloudinary.api.delete_resources(imageIds)
-
+    if (imageIds.length > 0) {
+        await cloudinary.api.delete_resources(imageIds)
+    }
+    
     await clearDB(User);
     await disconnectDB();
 })
@@ -227,5 +231,40 @@ describe('uploading profile picture', () => {
     it('accepts gif uploads', async() => {
         const res = await uploadFile('public/images/catJAM.gif', 200);
         imageIds.push(res.body.imgId)
+    })
+})
+
+async function deleteUser(status, authorization = auth, userId = updatedUser._id) {
+    return await request(app)
+    .delete(`/user/${userId}`)
+    .set('Authorization', authorization)
+    .expect(status);
+}
+
+describe('user delete', () => {
+    it('deletes user and any associated data', async() => {
+        const res = await deleteUser(200);
+        // should return the deleted user's details
+
+        const userDMs = await Chat.find({dm: true, 'members.member': res.body.user._id})
+        expect(userDMs).toStrictEqual([]); // expects all dm's with user to be deleted
+
+        const chatsWithUser = await Chat.find({'members.member': res.body.user._id})
+        expect(chatsWithUser).toStrictEqual([]); // expects no chats with deleted user in member list
+
+        const userMessages = await Message.find({postedBy: res.body.user._id})
+        expect(userMessages).toStrictEqual([]) // no messages
+    })
+
+    it.only('rejects deleting different user', async() => {
+        await userRegister({username: 'smarty', password: '12345678', confirmPassword: '12345678'}, 200);
+        const res = await userLogin({username: 'smarty', password: '12345678'}, 200)
+        const smarty = res.body;
+
+        await deleteUser(401, `Bearer ${smarty.token}`);
+    })
+
+    it('rejects deleting with invalid token', async() => {
+        await deleteUser(401, 'Bearer notatoken')
     })
 })
