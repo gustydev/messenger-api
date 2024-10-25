@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const Message = require('./message');
+const Chat = require('./chat')
 
 const UserSchema = new Schema({
     username: {type: String, required: true, minLength: 4, maxLength: 30, unique: true},
@@ -17,15 +19,20 @@ const UserSchema = new Schema({
 
 UserSchema.index({ username: 1 });
 
-UserSchema.pre('remove', async function(next) {
-    const userId = this._id;
+UserSchema.pre('findOneAndDelete', async function(next) {
     try {
+        const filter = this.getFilter(); // Filter = {_id: userId} (basically what is passed on the delete function)
+        const userId = filter._id;
+
+        await Message.deleteMany({ postedBy: userId }) 
         // upon deleting an user, also delete all of their messages
-        await Message.deleteMany({ postedBy: userId })
+
+        await Chat.deleteMany({ dm: true, 'members.member': userId}) 
         // and any dm's they have with other users
-        await Chat.deleteMany({ dm: true, 'members.member': userId})
+
+        await Chat.updateMany({'members.member': userId}, {$pull: {members: {member: userId}}}) 
         // as well as removing them from any member list they were in
-        await Chat.updateMany({'members.member': userId}, {$pull: {members: {member: userId}}})
+
         next()
     } catch (err) {
         next(err)

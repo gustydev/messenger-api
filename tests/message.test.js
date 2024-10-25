@@ -51,8 +51,6 @@ describe('posting messages in a chat', () => {
         const res = await postMessage({
             content: 'this is a valid message, hello there'
         }, 200, chat._id, authorization) 
-
-        console.log(res.body.chat.members)
     })
 
     it('posting message makes poster a chat member', async () => {

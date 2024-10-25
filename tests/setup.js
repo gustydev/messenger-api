@@ -51,22 +51,6 @@ async function clearDB(model) {
     await model.deleteMany(); // clears db of model used in test
 }
 
-async function userRegister(data, status) {
-    return await request(app)
-    .post('/user/register')
-    .expect('Content-Type', /json/)
-    .send(data)
-    .expect(status)
-}
-
-async function userLogin(data, status) {
-    return await request(app)
-    .post('/user/login')
-    .expect('Content-Type', /json/)
-    .send(data)
-    .expect(status)
-}
-
 // Catch common mongoose errors
 app.use((err, req, res, next) => {
     if (err.name === 'CastError') {
@@ -80,6 +64,7 @@ app.use((err, req, res, next) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
+    console.log(err)
     const statusCode = err.statusCode || 500;
     const message = err.message || 'Internal Server Error';
 
@@ -88,7 +73,7 @@ app.use((err, req, res, next) => {
       message,
       ...err
     };
-    // console.log(error)
+
     res.status(statusCode).json(error)
   });
 
@@ -98,6 +83,4 @@ module.exports = {
     connectDB,
     disconnectDB,
     clearDB,
-    userRegister,
-    userLogin
 };

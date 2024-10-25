@@ -1,5 +1,5 @@
 const { app, request, connectDB, disconnectDB, clearDB } = require('./setup');
-const { userLogin, userRegister, userUpdate, userDelete, uploadPFP } = require('./requests');
+const { userLogin, userRegister, userUpdate, userDelete, uploadPFP, createChat, postMessage } = require('./requests');
 
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
@@ -13,6 +13,7 @@ const Chat = require('../src/models/chat');
 let updatedUser;
 let auth;
 let id;
+let smarty; // second user used for deletion tests
 const imageIds = []; // Array of Cloudinary public image IDs to clean up after tests
 
 beforeAll(async () => {
@@ -32,6 +33,11 @@ beforeAll(async () => {
     id = updatedUser._id;
 
     auth = `Bearer ${res.body.token}`;
+
+    await userRegister({ username: 'smarty', password: '12345678', confirmPassword: '12345678' }, 200);
+    const res2 = await userLogin({ username: 'smarty', password: '12345678' }, 200);
+
+    smarty = res2.body;
 });
 
 afterAll(async () => {
@@ -239,24 +245,31 @@ describe('uploading profile picture', () => {
 
 describe('user delete', () => {
     it('rejects deleting different user', async () => {
-        await userRegister({ username: 'smarty', password: '12345678', confirmPassword: '12345678' }, 200);
-        const res = await userLogin({ username: 'smarty', password: '12345678' }, 200);
-        const smarty = res.body;
-
         await userDelete(403, `Bearer ${smarty.token}`, id);
     });
 
     it('deletes user and any associated data', async () => {
+        // First, create some chats and some messages
+        const c1 = await createChat({title: 'random title'}, 200, auth);
+        const c2 = await createChat({dm: true, recipient: smarty.user._id}, 200, auth)
+
+        await postMessage({content: 'AAAAA'}, 200, c1.body.chat._id, auth)
+        await postMessage({content: 'BBBBB'}, 200, c2.body.chat._id, auth)
+
+        // then delete the user
         const res = await userDelete(200, auth, id);
+        
+        // returns the deleted user data
+        expect(res.body.user._id).toBeDefined();
+        expect(res.body.msg).toBe('User deleted');
 
         const userDMs = await Chat.find({ dm: true, 'members.member': res.body.user._id });
-        expect(userDMs).toStrictEqual([]);
-
         const chatsWithUser = await Chat.find({ 'members.member': res.body.user._id });
-        expect(chatsWithUser).toStrictEqual([]);
-
         const userMessages = await Message.find({ postedBy: res.body.user._id });
-        expect(userMessages).toStrictEqual([]);
+        
+        expect(userDMs).toStrictEqual([]); // no dm's with the user should be found
+        expect(chatsWithUser).toStrictEqual([]); // no chat member lists should have them either
+        expect(userMessages).toStrictEqual([]); // and no messages posted by them should exist
     });
 
     it('rejects deleting with invalid token', async () => {
