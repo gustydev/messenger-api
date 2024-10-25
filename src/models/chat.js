@@ -21,9 +21,13 @@ const ChatSchema = new Schema({
 ChatSchema.index({ 'members.member': 1 });
 
 ChatSchema.pre('remove', async function(next) {
-    // upon deleting a chat, also delete all of its messages
-    await Message.deleteMany({ chat: this._id });
-    next();
+    try {
+        // upon deleting a chat, also delete all of its messages
+        await Message.deleteMany({ chat: this._id });
+        next()
+    } catch (err) {
+        next(err);
+    }
 });
 
 module.exports = mongoose.model('Chat', ChatSchema)

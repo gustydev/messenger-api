@@ -12,16 +12,23 @@ const UserSchema = new Schema({
     profilePicUrl: {type: String},
     status: {type: String, required: true, default: 'Offline'},
     bio: {type: String, minLength: 1, maxLength: 200},
-    messages: [{type: Schema.Types.ObjectId, ref: 'Message'}],
     demo: {type: Boolean, default: false}
 }, { collation: { locale: 'en_US', strength: 1 } }) // case insensitive unique indexes
 
 UserSchema.index({ username: 1 });
 
 UserSchema.pre('remove', async function(next) {
-    // upon deleting an user, also delete all of their messages
-    await Message.deleteMany({ postedBy: this._id });
-    next();
+    try {
+        await Promise.all([
+            // upon deleting an user, also delete all of their messages
+            Message.deleteMany({ postedBy: this._id }),
+            // and any dm's they have with other users
+            Chat.deleteMany({ dm: true, 'members.member': this._id})
+        ])
+        next()
+    } catch (err) {
+        next(err)
+    }
 });
 
 module.exports = mongoose.model('User', UserSchema);
