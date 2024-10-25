@@ -182,7 +182,7 @@ describe('update user', () => {
         await userUpdate({
             displayName: 'ha ha ha',
             bio: 'spam spam spam'
-        }, 401, `Bearer ${res.body.token}`)
+        }, 403, `Bearer ${res.body.token}`)
     })
 
     it('rejects updating with invalid inputs', async() => {
@@ -242,6 +242,15 @@ async function deleteUser(status, authorization = auth, userId = updatedUser._id
 }
 
 describe('user delete', () => {
+    // this test needs to run first or else the next test breaks
+    it('rejects deleting different user', async() => {
+        await userRegister({username: 'smarty', password: '12345678', confirmPassword: '12345678'}, 200);
+        const res = await userLogin({username: 'smarty', password: '12345678'}, 200)
+        const smarty = res.body;
+
+        await deleteUser(403, `Bearer ${smarty.token}`);
+    })
+
     it('deletes user and any associated data', async() => {
         const res = await deleteUser(200);
         // should return the deleted user's details
@@ -254,14 +263,6 @@ describe('user delete', () => {
 
         const userMessages = await Message.find({postedBy: res.body.user._id})
         expect(userMessages).toStrictEqual([]) // no messages
-    })
-
-    it.only('rejects deleting different user', async() => {
-        await userRegister({username: 'smarty', password: '12345678', confirmPassword: '12345678'}, 200);
-        const res = await userLogin({username: 'smarty', password: '12345678'}, 200)
-        const smarty = res.body;
-
-        await deleteUser(401, `Bearer ${smarty.token}`);
     })
 
     it('rejects deleting with invalid token', async() => {

@@ -1,4 +1,4 @@
-const { UnauthorizedError } = require("../utils/customErrors");
+const { ForbiddenError } = require("../utils/customErrors");
 const User = require('../models/user');
 
 async function checkIfDemo(req, res, next) {
@@ -6,7 +6,7 @@ async function checkIfDemo(req, res, next) {
         const user = await User.findById(req.user.id)
 
         if (user.demo) {
-            return next(new UnauthorizedError('Demo accounts cannot perform this action. Create a free account to do this!'))
+            return next(new ForbiddenError('Demo accounts cannot perform this action. Create a free account to do it!'))
         }
     
         next()

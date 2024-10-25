@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 const { body, validationResult } = require('express-validator');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user')
-const { UnauthorizedError, ValidationError, InvalidTokenError } = require('../utils/customErrors.js')
+const { UnauthorizedError, ValidationError, ForbiddenError } = require('../utils/customErrors.js')
 const multer = require('multer');
 const upload = multer({storage: multer.memoryStorage(), limits: {fileSize: 3 * 1024 * 1024}})
 const cloudinary = require('cloudinary').v2;
@@ -171,7 +171,7 @@ exports.userUpdate = [
         const userToBeEdited = await User.findById(req.params.userId);
 
         if (!userToBeEdited._id.equals(req.user.id)) {
-            throw new UnauthorizedError('Cannot update someone else\'s profile')
+            throw new ForbiddenError('Cannot update someone else\'s profile')
         }
 
         let imgUrl;
@@ -218,12 +218,12 @@ exports.userUpdate = [
 
 exports.userDelete = asyncHandler(async(req, res, next) => {
     const userToBeDeleted = await User.findById(req.params.userId);
-
+    console.log('deleted boy: ', userToBeDeleted)
     if (!userToBeDeleted._id.equals(req.user.id)) {
-        throw new UnauthorizedError('Cannot delete someone else\'s account!')
+        throw new ForbiddenError('Cannot delete someone else\'s account!')
     }
 
     const user = await User.findOneAndDelete({_id: req.params.userId});
-    console.log(`User ${req.params.userId} deleted successfully (requested by: ${req.user.id})`)
+
     return res.status(200).json({msg: 'User deleted', user})
 })

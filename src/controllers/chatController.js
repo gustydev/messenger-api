@@ -4,7 +4,7 @@ const asyncHandler = require('express-async-handler');
 const Chat = require('../models/chat');
 const User = require('../models/user')
 const Message = require('../models/message')
-const { ValidationError, UnauthorizedError, NotFoundError, InvalidTokenError } = require('../utils/customErrors');
+const { ValidationError, UnauthorizedError, NotFoundError, InvalidTokenError, ForbiddenError } = require('../utils/customErrors');
 const multer = require('multer')
 const upload = multer({storage: multer.memoryStorage(), limits: {fileSize: 3 * 1024 * 1024}})
 const cloudinary = require('cloudinary').v2;
@@ -51,7 +51,7 @@ exports.getChatById = asyncHandler(async function(req, res, next) {
     ])   
 
     if (!chat.members.find((m) => m.member.equals(user._id)) && !chat.public) {
-        throw new UnauthorizedError('You are not allowed to view this private chat')
+        throw new ForbiddenError('You are not allowed to view this private chat')
     }
 
     res.status(200).json(chat);
@@ -64,7 +64,7 @@ exports.getChatMessages = asyncHandler(async function(req, res, next) {
     ])
 
     if (!chat.members.find((m) => m.member.equals(user._id)) && !chat.public) {
-        throw new UnauthorizedError("You are not allowed to view this private chat's messages")
+        throw new ForbiddenError("You are not allowed to view this private chat's messages")
     }
 
     res.status(200).json(chat.messages);
@@ -77,7 +77,7 @@ exports.getChatMembers = asyncHandler(async function(req, res, next) {
     ])
 
     if (!chat.members.find((m) => m.member.equals(user._id)) && !chat.public) {
-        throw new UnauthorizedError("You are not allowed to view this private chat's members")
+        throw new ForbiddenError("You are not allowed to view this private chat's members")
     }
     
     res.status(200).json(chat.members);
@@ -231,7 +231,7 @@ exports.updateChat = [
 
         if (!userInChat || !userInChat.isAdmin) {
             // Reject put request if user is not in chat or is not an admin
-            throw new UnauthorizedError('User is not in chat or is not a chat admin');
+            throw new ForbiddenError('User is not in chat or is not a chat admin');
         }
 
         const { title, description, public: isPublic } = req.body;
@@ -288,7 +288,7 @@ exports.postMessage = [
             }
 
             if (poster.demo) {
-                throw new UnauthorizedError('Demo accounts cannot post attachments in chat')
+                throw new ForbiddenError('Demo accounts cannot post attachments in chat')
             }
             
             await new Promise((resolve) => {
@@ -319,7 +319,7 @@ exports.postMessage = [
         const isMember = chatToUpdate.members.some((m) => m.member.equals(poster._id))
         if (!isMember) {
             if (chatToUpdate.dm) {
-                throw new UnauthorizedError('You are not part of this DM')
+                throw new ForbiddenError('You are not part of this DM')
             }
             chatToUpdate.members.push({member: poster, isAdmin: false})
         }

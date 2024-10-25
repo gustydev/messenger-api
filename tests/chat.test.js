@@ -164,13 +164,13 @@ describe('update chat info', () => {
 
         await updateChat({
             title: 'random'
-        }, 401, updatedChat._id, authy)
+        }, 403, updatedChat._id, authy)
     })
 
     it('rejects updating if user is not a chat admin', async() => {
         await updateChat({
             title: 'random'
-        }, 401, updatedChat._id, `Bearer ${regular.token}`)
+        }, 403, updatedChat._id, `Bearer ${regular.token}`)
     })
 })
 

@@ -29,4 +29,12 @@ class NotFoundError extends Error {
   }
 }
 
-module.exports = { UnauthorizedError, ValidationError, InvalidTokenError, NotFoundError }
+class ForbiddenError extends Error {
+  constructor(message = 'Forbidden') {
+    super(message);
+    this.statusCode = 403;
+    this.name = 'ForbiddenError'
+  }
+}
+
+module.exports = { UnauthorizedError, ValidationError, InvalidTokenError, NotFoundError, ForbiddenError }
