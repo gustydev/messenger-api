@@ -263,10 +263,12 @@ describe('user delete', () => {
         expect(res.body.user._id).toBeDefined();
         expect(res.body.msg).toBe('User deleted');
 
-        const userDMs = await Chat.find({ dm: true, 'members.member': res.body.user._id });
-        const chatsWithUser = await Chat.find({ 'members.member': res.body.user._id });
-        const userMessages = await Message.find({ postedBy: res.body.user._id });
-        
+        const [userDMs, chatsWithUser, userMessages] = await Promise.all([
+            Chat.find({ dm: true, 'members.member': res.body.user._id }),
+            Chat.find({ 'members.member': res.body.user._id }),
+            Message.find({ postedBy: res.body.user._id })
+        ]);
+
         expect(userDMs).toStrictEqual([]); // no dm's with the user should be found
         expect(chatsWithUser).toStrictEqual([]); // no chat member lists should have them either
         expect(userMessages).toStrictEqual([]); // and no messages posted by them should exist

@@ -19,10 +19,16 @@ const ChatSchema = new Schema({
 
 ChatSchema.index({ 'members.member': 1 });
 
-ChatSchema.pre('remove', async function(next) {
+ChatSchema.pre('deleteMany', async function(next) {
+    // Refers to the "deleteMany" to delete all of user's dm's
+    // When deleting just one chat, should also do the same thing (if later added)
     try {
+        const filter = this.getFilter();
+        const chatId = filter._id;
+
         // upon deleting a chat, also delete all of its messages
-        await Message.deleteMany({ chat: this._id });
+        await Message.deleteMany({ chat: chatId });
+
         next()
     } catch (err) {
         next(err);
