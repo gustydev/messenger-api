@@ -18,15 +18,14 @@ const UserSchema = new Schema({
 UserSchema.index({ username: 1 });
 
 UserSchema.pre('remove', async function(next) {
+    const userId = this._id;
     try {
-        await Promise.all([
-            // upon deleting an user, also delete all of their messages
-            Message.deleteMany({ postedBy: this._id }),
-            // and any dm's they have with other users
-            Chat.deleteMany({ dm: true, 'members.member': this._id}),
-            // as well as removing them from any member list they were in
-            Chat.updateMany({'members.member': this._id}, {$pull: {members: {member: this._id}}})
-        ])
+        // upon deleting an user, also delete all of their messages
+        await Message.deleteMany({ postedBy: userId })
+        // and any dm's they have with other users
+        await Chat.deleteMany({ dm: true, 'members.member': userId})
+        // as well as removing them from any member list they were in
+        await Chat.updateMany({'members.member': userId}, {$pull: {members: {member: userId}}})
         next()
     } catch (err) {
         next(err)

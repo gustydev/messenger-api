@@ -218,7 +218,7 @@ exports.userUpdate = [
 
 exports.userDelete = asyncHandler(async(req, res, next) => {
     const userToBeDeleted = await User.findById(req.params.userId);
-    console.log('deleted boy: ', userToBeDeleted)
+
     if (!userToBeDeleted._id.equals(req.user.id)) {
         throw new ForbiddenError('Cannot delete someone else\'s account!')
     }
