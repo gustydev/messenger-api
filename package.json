@@ -16,7 +16,7 @@
     "socket.io": "^4.8.0",
     "supertest": "^7.0.0"
   },
-  "name": "msg-api",
+  "name": "messenger-api",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
