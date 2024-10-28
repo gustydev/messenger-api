@@ -13,6 +13,7 @@ const passport = require('passport');
 const userRoute = require('./routes/user')
 const chatRoute = require('./routes/chat')
 const { Server } = require('socket.io');
+const helmet = require('helmet');
 
 const server = createServer(app);
 
@@ -22,10 +23,6 @@ mongoose.set('strictQuery', 'false')
 const databaseUrl = process.env.DATABASE_URL;
 
 main()
-.then(async() => {
-  // await Chat.deleteMany();
-  // await Message.deleteMany();
-})
 .catch((err) => console.log(err));
 
 async function main() {
@@ -45,6 +42,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'))
+app.use(helmet());
 
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),

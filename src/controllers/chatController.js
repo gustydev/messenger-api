@@ -1,10 +1,10 @@
-const mongoose = require('mongoose')
+require('mongoose')
 const { body, param, validationResult } = require('express-validator');
 const asyncHandler = require('express-async-handler');
 const Chat = require('../models/chat');
 const User = require('../models/user')
 const Message = require('../models/message')
-const { ValidationError, UnauthorizedError, NotFoundError, InvalidTokenError, ForbiddenError } = require('../utils/customErrors');
+const { ValidationError } = require('../utils/customErrors');
 const multer = require('multer')
 const upload = multer({storage: multer.memoryStorage(), limits: {fileSize: 3 * 1024 * 1024}})
 const cloudinary = require('cloudinary').v2;
@@ -282,7 +282,7 @@ exports.postMessage = [
 
         if (req.file) {
             if (req.file.size === 0) {
-                const error = new Error('File is too small (O bytes)')
+                const error = new Error('File is too small')
                 error.statusCode = 500;
                 throw error;
             }

@@ -25,14 +25,12 @@ UserSchema.pre('findOneAndDelete', async function(next) {
         const filter = this.getFilter(); // Filter = {_id: userId} (basically what is passed on the findoneanddelete query)
         const userId = filter._id;
 
-        await Promise.all([
-            Message.deleteMany({ postedBy: userId }), 
-            // upon deleting an user, also delete all of their messages
-            Chat.deleteMany({ dm: true, 'members.member': userId}), 
-            // and any dm's they have with other users
-            Chat.updateMany({'members.member': userId}, {$pull: {members: {member: userId}}}) 
-            // as well as removing them from any member list they were in
-        ])
+        await Message.deleteMany({ postedBy: userId })
+        // upon deleting an user, also delete all of their messages
+        await Chat.deleteMany({ dm: true, 'members.member': userId})
+        // and any dm's they have with other users
+        await Chat.updateMany({'members.member': userId}, {$pull: {members: {member: userId}}}) 
+        // as well as removing them from any member list they were in
 
         next()
     } catch (err) {

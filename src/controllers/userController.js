@@ -1,13 +1,18 @@
 require('dotenv').config();
-const mongoose = require('mongoose')
+require('mongoose')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { body, validationResult } = require('express-validator');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user')
-const { UnauthorizedError, ValidationError, ForbiddenError } = require('../utils/customErrors.js')
 const multer = require('multer');
-const upload = multer({storage: multer.memoryStorage(), limits: {fileSize: 3 * 1024 * 1024}})
+const upload = multer({storage: multer.memoryStorage(), limits: {fileSize: 3 * 1024 * 1024}, fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+        return cb(new Error('Only image files are allowed'), false)
+    }
+
+    cb(null, true)
+}})
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
     secure: true
@@ -178,18 +183,6 @@ exports.userUpdate = [
         let imgId;
 
         if (req.file) {
-            if (!req.file.mimetype.startsWith('image/')) {
-                const error = new Error('Cannot upload non-image as a profile picture')
-                error.statusCode = 400;
-                throw error;
-            }
-
-            if (req.file.size === 0) {
-                const error = new Error('File is too small (O bytes)')
-                error.statusCode = 500;
-                throw error;
-            }
-
             await new Promise((resolve) => {
                 cloudinary.uploader.upload_stream({resource_type: 'image'}, (error, result) => {
                     return resolve(result)
