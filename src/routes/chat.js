@@ -14,10 +14,7 @@ router.post('/:chatId/message', validateToken, controller.postMessage)
 // the checkifdemo middleware is not used here because the message may not have an attachment
 
 router.put('/:chatId', validateToken, controller.updateChat)
-router.put('/:chatId/members') // update members list of chat (either adding or removing)
 
 router.post('/', validateToken, checkIfDemo, controller.newChat)
-
-router.delete('/:chatId') // delete a chat by id
 
 module.exports = router;

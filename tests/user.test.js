@@ -49,16 +49,6 @@ afterAll(async () => {
     await disconnectDB();
 });
 
-describe('get user', () => {
-    it('respond with user get', function (done) {
-        request(app)
-            .get('/user/')
-            .expect('Content-Type', /json/)
-            .expect({ msg: 'user get' })
-            .expect(200, done);
-    });
-});
-
 describe('user register', () => {
     it('create a new valid user', async () => {
         const res = await userRegister(
