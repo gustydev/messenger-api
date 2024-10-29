@@ -12,6 +12,9 @@ const userRoute = require('./routes/user')
 const chatRoute = require('./routes/chat')
 const { Server } = require('socket.io');
 const helmet = require('helmet');
+const path = require('path')
+const fs = require('fs')
+const { marked } = require('marked');
 
 const server = createServer(app);
 
@@ -61,7 +64,15 @@ passport.use(
 );
 
 app.get('/', (req, res) => {
-    res.send('hi there :>') // later replace with readme.md or similar view
+  const readme = path.join(__dirname, '../README.md')
+
+  fs.readFile(readme, 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).send('Error reading README.md')
+    }
+
+    res.send(marked(data));
+  })
 })
 
 io.on('connection', async(socket) => {
